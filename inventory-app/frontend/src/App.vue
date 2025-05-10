@@ -25,8 +25,8 @@
           <div class="card">
             <p class="title">Товаров</p>
             <p class="value">{{ itemCount }}</p>
-            <p class="note">+8 новых</p>
-          </div>
+            <p class="note" v-if="newItems > 0">+{{ newItems }} новых за месяц</p>
+           </div>
           <div class="card">
             <p class="title">Поставки</p>
             <p class="value">{{ monthlyOrders }}</p>
@@ -34,16 +34,16 @@
           </div>
         </section>
 
-        <section class="charts">
-          <div class="chart-card">
-            <p class="title">Остатки за неделю</p>
-            <img src="https://fakeimg.pl/600x200/ddd/000/?text=LineChart" alt="Line chart" />
-          </div>
-          <div class="chart-card">
-            <p class="title">Оборот по складам</p>
-            <img src="https://fakeimg.pl/600x200/ddd/000/?text=BarChart" alt="Bar chart" />
-          </div>
-        </section>
+        <section class="dashboard-visuals">
+        <div class="chart-card">
+          <p class="title">Остатки за неделю</p>
+          <img src="https://fakeimg.pl/600x200/ddd/000/?text=LineChart" alt="Line chart" />
+        </div>
+        <div class="chart-card">
+          <p class="title">Оборот по складам</p>
+          <BarChart :data="turnoverData" />
+        </div>
+  </section>
 
         <section class="table-section">
           <p class="title">Популярные товары</p>
@@ -81,7 +81,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { GetDashboard, GetTopItems } from '../wailsjs/go/app/App'
+import { GetDashboard, GetTopItems, GetTurnoverByWarehouse } from '../wailsjs/go/app/App'
+import BarChart from './components/BarChart.vue'
 
 const tabs = [
   'Дашборд',
@@ -92,6 +93,7 @@ const tabs = [
   'Поставщики',
   'Движения'
 ]
+
 const currentTab = ref('Дашборд')
 
 // Динамические данные
@@ -100,11 +102,16 @@ const itemCount = ref(0)
 const monthlyOrders = ref(0)
 const topItems = ref([])
 
+const turnoverData = ref([]) // ⬅️ Добавлено: данные по обороту
+
+const newItems = ref(0)
+
 onMounted(() => {
   GetDashboard().then(data => {
     totalStock.value = data.total_stock
     itemCount.value = data.item_count
     monthlyOrders.value = data.monthly_orders
+    newItems.value = data.new_items
   }).catch(err => {
     console.error("Ошибка загрузки дашборда:", err)
   })
@@ -114,6 +121,13 @@ onMounted(() => {
   }).catch(err => {
     console.error("Ошибка загрузки топовых товаров:", err)
   })
+
+  GetTurnoverByWarehouse().then(data => {
+    turnoverData.value = data
+    console.log("Оборот по складам:", data)
+  }).catch(err => {
+    console.error("Ошибка загрузки оборота по складу:", err)
+  })
 })
 </script>
 
@@ -121,6 +135,13 @@ onMounted(() => {
 .dashboard {
   padding: 2rem;
   background-color: #f9f9f9;
+}
+.dashboard-visuals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  align-items: stretch;
 }
 
 .header {
@@ -207,7 +228,7 @@ h1 {
 
 .cards {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
@@ -215,8 +236,9 @@ h1 {
   flex: 1;
   background: white;
   border-radius: 10px;
-  padding: 1.2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
 }
 
 .card.highlight {
@@ -224,8 +246,8 @@ h1 {
 }
 
 .card .title {
-  font-size: 0.85rem;
-  color: #666;
+  font-weight: 700;
+  color: #1f2937; /* почти чёрный */
 }
 
 .card .value {
@@ -250,13 +272,22 @@ h1 {
 }
 
 .chart-card {
-  flex: 1;
+  flex: 1 1 45%;
+  min-width: 320px;
+  max-width: 100%;
   background: white;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease-in-out;
 }
 
+
+.chart-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
 .chart-card img {
   width: 100%;
   height: 200px;

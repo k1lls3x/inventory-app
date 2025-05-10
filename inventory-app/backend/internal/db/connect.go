@@ -10,7 +10,7 @@ import (
 var DB *sqlx.DB
 func Init() {
 
-	_ = godotenv.Load() // Загружаем переменные из .env
+	_ = godotenv.Load()
 	cfg := LoadConfigFromEnv()
 	db, err := sqlx.Connect("postgres", cfg.DSN())
 	if err != nil {

@@ -6,6 +6,14 @@ export function GetDashboard() {
   return window['go']['app']['App']['GetDashboard']();
 }
 
-export function Greet(arg1) {
-  return window['go']['app']['App']['Greet'](arg1);
+export function GetStock() {
+  return window['go']['app']['App']['GetStock']();
+}
+
+export function GetTopItems() {
+  return window['go']['app']['App']['GetTopItems']();
+}
+
+export function GetTurnoverByWarehouse() {
+  return window['go']['app']['App']['GetTurnoverByWarehouse']();
 }
