@@ -21,7 +21,7 @@ func FindStockByWarehouse(warehouseID int) ([]model.Stock, error) {
 	return result, err
 }
 
-func ChangeStock(itemID int, warehouseID, newQuantity int) error {
+func ChangeStock(itemID, warehouseID, newQuantity int) error {
 		_, err := db.DB.Exec(`
 													UPDATE Stock
 													SET quantity = $1

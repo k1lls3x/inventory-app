@@ -39,3 +39,19 @@ func (a *App) GetDashboard() (*dashboard.DashboardData, error) {
 func (a *App) GetStock() ([]model.Stock, error) {
 	return repository.GetStocks()
 }
+
+func (a *App) AddStock( itemID, quantity, warehouseID int) error {
+	return repository.AddStock( itemID, quantity, warehouseID)
+}
+
+func (a *App) FindStockByWarehouse(warehouseID int) ([]model.Stock, error){
+	return repository.FindStockByWarehouse(warehouseID)
+}
+
+func (a *App) ChangeStock (itemID, warehouseID, newQuantity int) error{
+	return repository.ChangeStock(itemID, warehouseID, newQuantity)
+}
+
+func (a *App) RemoveStock(itemID, warehouseID int) error {
+	return repository.RemoveStock(itemID, warehouseID)
+}
