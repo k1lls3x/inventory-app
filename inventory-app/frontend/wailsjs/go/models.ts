@@ -23,6 +23,75 @@ export namespace dashboard {
 
 export namespace model {
 	
+	export class Item {
+	    item_id: number;
+	    sku: string;
+	    name: string;
+	    description?: string;
+	    uom: string;
+	    reorder_level: number;
+	    reorder_qty: number;
+	    price: number;
+	    cost: number;
+	    // Go type: time
+	    CreatedAt: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new Item(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.item_id = source["item_id"];
+	        this.sku = source["sku"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.uom = source["uom"];
+	        this.reorder_level = source["reorder_level"];
+	        this.reorder_qty = source["reorder_qty"];
+	        this.price = source["price"];
+	        this.cost = source["cost"];
+	        this.CreatedAt = this.convertValues(source["CreatedAt"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ItemFilter {
+	    SKU?: string;
+	    Name?: string;
+	    UOM?: string;
+	    PriceMin?: number;
+	    PriceMax?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemFilter(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.SKU = source["SKU"];
+	        this.Name = source["Name"];
+	        this.UOM = source["UOM"];
+	        this.PriceMin = source["PriceMin"];
+	        this.PriceMax = source["PriceMax"];
+	    }
+	}
 	export class ItemTurnoverByWarehouse {
 	    warehouse: string;
 	    name: string;
@@ -66,6 +135,8 @@ export namespace model {
 	    item_id: number;
 	    quantity: number;
 	    warehouse_id: number;
+	    // Go type: time
+	    last_updated: any;
 	
 	    static createFrom(source: any = {}) {
 	        return new Stock(source);
@@ -77,6 +148,41 @@ export namespace model {
 	        this.item_id = source["item_id"];
 	        this.quantity = source["quantity"];
 	        this.warehouse_id = source["warehouse_id"];
+	        this.last_updated = this.convertValues(source["last_updated"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Warehouse {
+	    warehouse_id: number;
+	    name: string;
+	    location?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Warehouse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.warehouse_id = source["warehouse_id"];
+	        this.name = source["name"];
+	        this.location = source["location"];
 	    }
 	}
 

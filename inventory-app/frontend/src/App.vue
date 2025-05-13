@@ -15,6 +15,7 @@
     </header>
 
     <main>
+      <!-- Вкладка: Дашборд -->
       <section v-if="currentTab === 'Дашборд'">
         <section class="cards">
           <div class="card highlight">
@@ -26,7 +27,7 @@
             <p class="title">Товаров</p>
             <p class="value">{{ itemCount }}</p>
             <p class="note" v-if="newItems > 0">+{{ newItems }} новых за месяц</p>
-           </div>
+          </div>
           <div class="card">
             <p class="title">Поставки</p>
             <p class="value">{{ monthlyOrders }}</p>
@@ -35,15 +36,15 @@
         </section>
 
         <section class="dashboard-visuals">
-        <div class="chart-card">
-          <p class="title">Остатки за неделю</p>
-          <img src="https://fakeimg.pl/600x200/ddd/000/?text=LineChart" alt="Line chart" />
-        </div>
-        <div class="chart-card">
-          <p class="title">Оборот по складам</p>
-          <BarChart :data="turnoverData" />
-        </div>
-  </section>
+          <div class="chart-card">
+            <p class="title">Остатки за неделю</p>
+            <img src="https://fakeimg.pl/600x200/ddd/000/?text=LineChart" alt="Line chart" />
+          </div>
+          <div class="chart-card">
+            <p class="title">Оборот по складам</p>
+            <BarChart :data="turnoverData" />
+          </div>
+        </section>
 
         <section class="table-section">
           <p class="title">Популярные товары</p>
@@ -72,6 +73,69 @@
         </section>
       </section>
 
+      <!-- Вкладка: Остатки -->
+      <section v-else-if="currentTab === 'Остатки'" class="table-section">
+        <p class="title">Остатки на складе</p>
+   <!-- Раздел фильтрации и управления -->
+<div class="stock-filters">
+  <!-- Склад -->
+  <div class="input-box">
+    <label for="warehouse">Склад:</label>
+    <select v-model="selectedWarehouseId" class="input">
+      <option value="0">Все склады</option>
+      <option
+        v-for="wh in warehouses"
+        :key="wh.warehouse_id"
+        :value="wh.warehouse_id"
+      >
+        {{ wh.name }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Поиск -->
+  <div class="input-box">
+    <input
+      type="text"
+      class="input"
+      v-model="searchQuery"
+      placeholder="Поиск по названию, SKU или складу"
+    />
+  </div>
+
+  <!-- Кнопка добавления -->
+  <div class="input-box">
+    <button @click="openAddModal">➕ Добавить остаток</button>
+  </div>
+</div>
+
+         <!-- Таблица -->
+         <table>
+          <thead>
+            <tr>
+              <th>Наименование</th>
+              <th>Номер</th>
+              <th>Склад</th>
+              <th>Количество</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="stock in filteredStockList" :key="stock.id">
+              <td>{{ stock.name }}</td>
+              <td>{{ stock.sku }}</td>
+              <td>{{ stock.warehouse }}</td>
+              <td>{{ stock.quantity }}</td>
+              <td>
+                <button @click="openEditModal(stock)">✏️</button>
+                <button @click="deleteStock(stock.id)">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Остальные вкладки -->
       <section v-else>
         <p>Раздел "{{ currentTab }}" в разработке...</p>
       </section>
@@ -79,11 +143,16 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { GetDashboard, GetTopItems, GetTurnoverByWarehouse } from '../wailsjs/go/app/App'
 import BarChart from './components/BarChart.vue'
-
+import { GetStockDetails } from '../wailsjs/go/app/App'
+import { FindStockByWarehouse } from '../wailsjs/go/app/App'
+import { GetWarehouses } from '../wailsjs/go/app/App'
+import { computed } from 'vue'
+import { watch } from 'vue'
 const tabs = [
   'Дашборд',
   'Остатки',
@@ -93,9 +162,11 @@ const tabs = [
   'Поставщики',
   'Движения'
 ]
-
+const warehouses = ref([])
+const selectedWarehouseId = ref(0)
+const searchQuery = ref('')
 const currentTab = ref('Дашборд')
-
+const stockList = ref([])
 // Динамические данные
 const totalStock = ref(0)
 const itemCount = ref(0)
@@ -116,10 +187,19 @@ onMounted(() => {
     console.error("Ошибка загрузки дашборда:", err)
   })
 
+  GetStockDetails().then(data => {
+    stockList.value = data
+  }).catch(err => {
+    console.error("Ошибка загрузки остатков:", err)
+  })
+
   GetTopItems().then(data => {
     topItems.value = data
   }).catch(err => {
     console.error("Ошибка загрузки топовых товаров:", err)
+  })
+  GetWarehouses().then(data => {
+    warehouses.value.push(...data)
   })
 
   GetTurnoverByWarehouse().then(data => {
@@ -129,6 +209,33 @@ onMounted(() => {
     console.error("Ошибка загрузки оборота по складу:", err)
   })
 })
+// 🔄 Обновление по выбранному складу
+watch(selectedWarehouseId, (id) => {
+  if (id === 0) {
+    GetStockDetails().then(data => {
+      stockList.value = data
+    })
+  } else {
+    FindStockByWarehouse(id).then(data => {
+      stockList.value = data.map(s => ({
+        id: s.item_id,
+        name: s.name,
+        sku: s.sku,
+        warehouse: warehouses.value.find(w => w.warehouse_id === id)?.name || '',
+        quantity: s.quantity
+      }))
+    })
+  }
+})
+
+// 🔍 Фильтр по текстовому поиску
+const filteredStockList = computed(() =>
+  stockList.value.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    item.sku.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    item.warehouse.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+)
 </script>
 
 <style scoped>

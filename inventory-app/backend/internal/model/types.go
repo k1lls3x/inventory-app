@@ -53,6 +53,7 @@ type Stock struct {
 	ItemID      int `db:"item_id" json:"item_id"`
 	Quantity    int `db:"quantity" json:"quantity"`
 	WarehouseID int `db:"warehouse_id" json:"warehouse_id"`
+	LastUpdated time.Time `db:"last_updated" json:"last_updated"`
 }
 
 type Warehouse struct {
@@ -61,6 +62,9 @@ type Warehouse struct {
 	Location    *string `db:"location" json:"location"`
 }
 
+
+
+//---------------------------------------------------------------\\
 type ItemTurnoverByWarehouse struct {
 	Warehouse string `db:"warehouse" json:"warehouse"`
 	Name      string `db:"name" json:"name"`
@@ -74,4 +78,12 @@ type ItemWithStock struct {
 	SKU       string `json:"sku"`
 	Warehouse string `json:"warehouse"`
 	Quantity  int    `json:"quantity"`
+}
+
+type ItemFilter struct {
+	SKU       *string
+	Name      *string
+	UOM       *string
+	PriceMin  *float64
+	PriceMax  *float64
 }

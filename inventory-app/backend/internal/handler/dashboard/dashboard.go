@@ -41,17 +41,18 @@ func LoadTurnoverByWarehouse() ([]model.ItemTurnoverByWarehouse, error) {
 }
 // LoadTopItems возвращает топ-10 товаров по остатку
 func LoadTopItems() ([]model.ItemWithStock, error) {
-	query := `
-	SELECT
-		i.name,
-		i.sku,
-		'Main Warehouse' AS warehouse,  -- временно, если складов нет
-		s.quantity
-	FROM stock s
-	JOIN item i ON i.item_id = s.item_id
-	ORDER BY s.quantity DESC
-	LIMIT 10;
-	`
+		query := `
+		SELECT
+			i.name,
+			i.sku,
+			w.name AS warehouse,
+			s.quantity
+		FROM stock s
+		JOIN item i ON i.item_id = s.item_id
+		JOIN warehouse w ON w.warehouse_id = s.warehouse_id
+		ORDER BY s.quantity DESC
+		LIMIT 10;
+		`
 
 	var items []model.ItemWithStock
 	err := db.DB.Select(&items, query)

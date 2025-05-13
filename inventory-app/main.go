@@ -7,8 +7,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 
+	myapp "inventory-app/backend/app"
 )
-import myapp "inventory-app/backend/app"
+
 //go:embed all:frontend/dist
 var assets embed.FS
 
@@ -19,8 +20,8 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "Склад",
-		Width:  1280,
-		Height: 768,
+		Width:  1556,
+		Height: 811,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

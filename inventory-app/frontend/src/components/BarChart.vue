@@ -40,7 +40,7 @@ const chartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      display: false 
+      display: false
     },
     title: {
       display: true,
@@ -57,7 +57,7 @@ const chartOptions = {
     tooltip: {
       callbacks: {
         label: function (context) {
-          return `$${context.formattedValue.toLocaleString()}`
+         return `${context.formattedValue.toLocaleString()} шт.`
         }
       }
     }
@@ -87,7 +87,7 @@ const chartOptions = {
         font: {
           size: 12
         },
-        callback: (value) => `$${value.toLocaleString()}`
+         callback: (value) => `${value.toLocaleString()} шт.`
       }
     }
   }
