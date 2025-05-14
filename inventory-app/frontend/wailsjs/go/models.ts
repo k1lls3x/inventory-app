@@ -23,6 +23,20 @@ export namespace dashboard {
 
 export namespace model {
 	
+	export class DailyStock {
+	    date: string;
+	    total: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DailyStock(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.date = source["date"];
+	        this.total = source["total"];
+	    }
+	}
 	export class Item {
 	    item_id: number;
 	    sku: string;
@@ -34,7 +48,7 @@ export namespace model {
 	    price: number;
 	    cost: number;
 	    // Go type: time
-	    CreatedAt: any;
+	    created_at: any;
 	
 	    static createFrom(source: any = {}) {
 	        return new Item(source);
@@ -51,7 +65,7 @@ export namespace model {
 	        this.reorder_qty = source["reorder_qty"];
 	        this.price = source["price"];
 	        this.cost = source["cost"];
-	        this.CreatedAt = this.convertValues(source["CreatedAt"], null);
+	        this.created_at = this.convertValues(source["created_at"], null);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -71,6 +85,22 @@ export namespace model {
 		    }
 		    return a;
 		}
+	}
+	export class ItemBrief {
+	    item_id: number;
+	    name: string;
+	    sku: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemBrief(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.item_id = source["item_id"];
+	        this.name = source["name"];
+	        this.sku = source["sku"];
+	    }
 	}
 	export class ItemFilter {
 	    SKU?: string;
@@ -113,6 +143,8 @@ export namespace model {
 	    }
 	}
 	export class ItemWithStock {
+	    item_id: number;
+	    warehouse_id: number;
 	    name: string;
 	    sku: string;
 	    warehouse: string;
@@ -124,6 +156,8 @@ export namespace model {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.item_id = source["item_id"];
+	        this.warehouse_id = source["warehouse_id"];
 	        this.name = source["name"];
 	        this.sku = source["sku"];
 	        this.warehouse = source["warehouse"];

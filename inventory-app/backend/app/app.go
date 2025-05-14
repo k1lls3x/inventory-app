@@ -58,14 +58,22 @@ func (a *App) GetStocks() ([]model.Stock, error) {
 	return repository.GetStocks()
 }
 
-func (a *App) AddStock( itemID, quantity, warehouseID int) error {
+func (a *App) AddStock(itemID, quantity, warehouseID int) error {
 	return repository.AddStock( itemID, quantity, warehouseID)
+}
+
+func (a *App) GetWeeklyStockTrend() ([]model.DailyStock, error) {
+	return repository.GetWeeklyStockTrend()
 }
 
 //-----------------------Items---------------------------------\\
 
 func (a *App) GetItems() ([]model.Item, error) {
 	return repository.GetItems()
+}
+
+func (a *App) GetAllItems() ([]model.ItemBrief, error) {
+	return repository.GetItemBriefList()
 }
 
 func (a *App)  UpdateItem(item model.Item) error {

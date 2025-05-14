@@ -22,6 +22,10 @@ export function FindStockByWarehouse(arg1) {
   return window['go']['app']['App']['FindStockByWarehouse'](arg1);
 }
 
+export function GetAllItems() {
+  return window['go']['app']['App']['GetAllItems']();
+}
+
 export function GetDashboard() {
   return window['go']['app']['App']['GetDashboard']();
 }
@@ -48,6 +52,10 @@ export function GetTurnoverByWarehouse() {
 
 export function GetWarehouses() {
   return window['go']['app']['App']['GetWarehouses']();
+}
+
+export function GetWeeklyStockTrend() {
+  return window['go']['app']['App']['GetWeeklyStockTrend']();
 }
 
 export function RemoveItem(arg1) {

@@ -5,11 +5,15 @@ import (
 	"inventory-app/backend/internal/model"
 	"log"
 	_"time"
+	"fmt"
 )
+
 func GetStockDetails() ([]model.ItemWithStock, error) {
 	var result []model.ItemWithStock
 	err := db.DB.Select(&result, `
 		SELECT
+			i.item_id,
+			w.warehouse_id,
 			i.name,
 			i.sku,
 			w.name AS warehouse,
@@ -25,9 +29,47 @@ func GetStockDetails() ([]model.ItemWithStock, error) {
 	}
 	return result, nil
 }
+
+func GetWeeklyStockTrend() ([]model.DailyStock, error) {
+	query := `
+		SELECT
+			d::date AS date,
+			COALESCE(SUM(s.quantity), 0) AS total
+		FROM generate_series(
+			CURRENT_DATE - interval '6 days',
+			CURRENT_DATE,
+			interval '1 day'
+		) d
+		LEFT JOIN stock s ON date_trunc('day', s.last_updated) <= d
+		GROUP BY d
+		ORDER BY d;
+	`
+
+	var trend []model.DailyStock
+	err := db.DB.Select(&trend, query)
+	if err != nil {
+		log.Println("❌ Ошибка при получении weekly stock trend:", err)
+		return nil, err
+	}
+
+	return trend, nil
+}
+
 // Добавить или обновить остаток
 func AddStock(itemID, quantity, warehouseID int) error {
-	_, err := db.DB.Exec(`
+	// Проверка: существует ли товар
+	var exists bool
+	err := db.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM item WHERE item_id = $1)`, itemID).Scan(&exists)
+	if err != nil {
+		log.Println("❌ Ошибка при проверке item:", err)
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("Товар с ID %d не существует", itemID)
+	}
+
+	// Вставка/обновление остатка
+	_, err = db.DB.Exec(`
 		INSERT INTO stock (item_id, quantity, warehouse_id, last_updated)
 		VALUES ($1, $2, $3, NOW())
 		ON CONFLICT (item_id, warehouse_id)
@@ -35,7 +77,7 @@ func AddStock(itemID, quantity, warehouseID int) error {
 	`, itemID, quantity, warehouseID)
 
 	if err != nil {
-		log.Println("❌ Ошибка при добавлении stock:", err)
+		log.Println("❌ Ошибка при добавлении остатка:", err)
 	}
 	return err
 }
@@ -45,6 +87,8 @@ func FindStockByWarehouse(warehouseID int) ([]model.ItemWithStock, error) {
 	var result []model.ItemWithStock
 	err := db.DB.Select(&result, `
 		SELECT
+			i.item_id,
+			w.warehouse_id,
 			i.name,
 			i.sku,
 			w.name AS warehouse,
@@ -60,7 +104,7 @@ func FindStockByWarehouse(warehouseID int) ([]model.ItemWithStock, error) {
 	return result, err
 }
 
-// Обновить количество
+
 func ChangeStock(itemID, warehouseID, newQuantity int) error {
 	_, err := db.DB.Exec(`
 		UPDATE stock

@@ -1,23 +1,32 @@
 <template>
   <div style="height: 280px; padding: 1rem;">
-    <Bar :data="chartData" :options="chartOptions" />
+    <Line :data="chartData" :options="chartOptions" />
   </div>
 </template>
 
 <script setup>
-import { Bar } from 'vue-chartjs'
+import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
   Tooltip,
   Legend,
-  BarElement,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale
 } from 'chart.js'
 import { computed } from 'vue'
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale
+)
 
 const props = defineProps({
   data: {
@@ -49,7 +58,7 @@ const chartOptions = {
       grid: { color: '#e5e7eb' }
     },
     x: {
-      ticks: { maxRotation: 0, minRotation: 0 },
+      ticks: { color: '#6b7280', maxRotation: 0 },
       grid: { display: false }
     }
   }

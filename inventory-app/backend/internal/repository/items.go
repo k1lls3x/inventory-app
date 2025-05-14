@@ -16,6 +16,16 @@ func GetItems() ([]model.Item, error) {
 	return items, err
 }
 
+func GetItemBriefList() ([]model.ItemBrief, error) {
+	var items []model.ItemBrief
+	query := `SELECT item_id, name, sku FROM item ORDER BY name`
+	err := db.DB.Select(&items, query)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
  func UpdateItem(item model.Item) error  {
 	query := `
 		UPDATE Item

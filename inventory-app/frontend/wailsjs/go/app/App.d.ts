@@ -13,6 +13,8 @@ export function FindItems(arg1:model.ItemFilter):Promise<Array<model.Item>>;
 
 export function FindStockByWarehouse(arg1:number):Promise<Array<model.ItemWithStock>>;
 
+export function GetAllItems():Promise<Array<model.ItemBrief>>;
+
 export function GetDashboard():Promise<dashboard.DashboardData>;
 
 export function GetItems():Promise<Array<model.Item>>;
@@ -26,6 +28,8 @@ export function GetTopItems():Promise<Array<model.ItemWithStock>>;
 export function GetTurnoverByWarehouse():Promise<Array<model.ItemTurnoverByWarehouse>>;
 
 export function GetWarehouses():Promise<Array<model.Warehouse>>;
+
+export function GetWeeklyStockTrend():Promise<Array<model.DailyStock>>;
 
 export function RemoveItem(arg1:string):Promise<void>;
 

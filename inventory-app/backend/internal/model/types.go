@@ -19,7 +19,7 @@ type Item struct {
 	ReorderQty   int     `db:"reorder_qty" json:"reorder_qty"`
 	Price        float64 `db:"price" json:"price"`
 	Cost         float64 `db:"cost" json:"cost"`
-	CreatedAt    time.Time `db:"created_at"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
 
 type Supplier struct {
@@ -74,10 +74,12 @@ type ItemTurnoverByWarehouse struct {
 }
 
 type ItemWithStock struct {
-	Name      string `json:"name"`
-	SKU       string `json:"sku"`
-	Warehouse string `json:"warehouse"`
-	Quantity  int    `json:"quantity"`
+	ItemID      int    `json:"item_id" db:"item_id"`
+	WarehouseID int    `json:"warehouse_id" db:"warehouse_id"`
+	Name        string `json:"name" db:"name"`
+	SKU         string `json:"sku" db:"sku"`
+	Warehouse   string `json:"warehouse" db:"warehouse"`
+	Quantity    int    `json:"quantity" db:"quantity"`
 }
 
 type ItemFilter struct {
@@ -86,4 +88,15 @@ type ItemFilter struct {
 	UOM       *string
 	PriceMin  *float64
 	PriceMax  *float64
+}
+
+type ItemBrief struct {
+	ItemID int    `db:"item_id" json:"item_id"`
+	Name   string `db:"name" json:"name"`
+	SKU    string `db:"sku" json:"sku"`
+}
+
+type DailyStock struct {
+	Date  string `json:"date"`
+	Total int    `json:"total"`
 }
