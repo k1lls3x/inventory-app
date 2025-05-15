@@ -226,7 +226,80 @@
           </table>
         </div>
       </section>
+          <section v-else-if="currentTab === 'Поставки'" class="table-section">
+      <div class="filter-controls">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>📦 Склад</label>
+            <select v-model="selectedDeliveryWarehouse" class="input">
+              <option value="0">Все склады</option>
+              <option
+                v-for="wh in warehouses"
+                :key="wh.warehouse_id"
+                :value="wh.warehouse_id"
+              >
+                {{ wh.name }}
+              </option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>🔍 Поиск</label>
+            <input
+              type="text"
+              class="input"
+              v-model="deliverySearchQuery"
+              placeholder="Название, SKU или поставщик"
+            />
+          </div>
+          <div class="filter-group button-group">
+            <label>&nbsp;</label>
+            <button class="add-button" @click="openAddDeliveryModal">➕ Добавить поставку</button>
+          </div>
+        </div>
+      </div>
+      <!-- Модалка для добавления поставки по аналогии -->
+      <!-- <div v-if="showAddDeliveryModal"> ... </div> -->
 
+      <div class="fade-in">
+        <div class="table-header">
+          <p class="title">Поставки</p>
+          <button class="export-button" @click="exportDeliveriesToExcel">📤 Экспорт в Excel</button>
+        </div>
+        <div class="chart-segment">
+          <BarChart
+            v-if="filteredDeliveriesChartData.datasets[0].data.length"
+            :data="filteredDeliveriesChartData"
+          />
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Наименование</th>
+              <th>SKU</th>
+              <th>Склад</th>
+              <th>Поставщик</th>
+              <th>Количество</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="d in filteredDeliveriesList" :key="d.id">
+              <td>{{ formatDate(d.date) }}</td>
+              <td>{{ d.name }}</td>
+              <td>{{ d.sku }}</td>
+              <td>{{ d.warehouse }}</td>
+              <td>{{ d.supplier }}</td>
+              <td>{{ d.quantity }}</td>
+              <td>
+                <button @click="openEditDeliveryModal(d)">✏️</button>
+                <button @click="deleteDelivery(d)">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
       <section v-else>
         <p>Раздел "{{ currentTab }}" в разработке...</p>
       </section>
@@ -238,30 +311,27 @@
 export default {
   methods: {
     exportToExcel() {
-      // window.runtime и window.go теперь определены!
-      if (!window.runtime || !window.runtime.SaveDialog) {
-        alert("Wails API не найден! Запусти через wails dev или из exe-файла.");
-        return;
-      }
-      window.runtime.SaveDialog({
-        title: "Сохранить как Excel",
-        defaultPath: "export.xlsx",
-        filters: [
-          { name: "Excel Files", extensions: ["xlsx"] }
-        ]
-      }).then(filePath => {
-        if (!filePath) {
-          alert("Файл не выбран!");
-          return;
+      window.go.app.App.ExportStockToExcel().then(base64data => {
+        const binary = atob(base64data);
+        const len = binary.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binary.charCodeAt(i);
         }
-        window.go.app.App.ExportStockToExcel(filePath)
-          .then(() => alert("Файл успешно сохранён!"))
-          .catch(err => alert("Ошибка экспорта: " + err));
+        const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "stock_report.xlsx";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      }).catch(err => {
+        alert("Ошибка экспорта: " + err);
       });
     }
   }
 }
 </script>
+
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
@@ -280,7 +350,8 @@ import {
   FindStockByWarehouse,
   GetWarehouses,
   AddStock,
-  GetAllItems
+  GetAllItems,
+  GetInboundDetails
 } from '../wailsjs/go/app/App'
 
 const tabs = [
@@ -292,6 +363,7 @@ const tabs = [
   'Поставщики',
   'Движения'
 ]
+
 const showEditModal = ref(false)
 const stockToEdit = ref(null)
 const warehouses = ref([])
@@ -355,6 +427,50 @@ function deleteStock(stock) {
     })
 }
 
+const deliveriesList = ref([])
+
+const selectedDeliveryWarehouse = ref(0)
+const deliverySearchQuery = ref('')
+
+const filteredDeliveriesList = computed(() =>
+  deliveriesList.value.filter(d =>
+    (selectedDeliveryWarehouse.value === 0 || d.warehouse_id === selectedDeliveryWarehouse.value) &&
+    (
+      d.name.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()) ||
+      d.sku.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()) ||
+      (d.supplier && d.supplier.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()))
+    )
+  )
+)
+
+const filteredDeliveriesChartData = computed(() => ({
+  labels: filteredDeliveriesList.value.map(d => d.name),
+  datasets: [
+    {
+      label: 'Поставки',
+      data: filteredDeliveriesList.value.map(d => d.quantity),
+      backgroundColor: '#000',
+      barThickness: 20
+    }
+  ]
+}))
+
+function openAddDeliveryModal() {
+  alert('Заглушка: откроется модалка для добавления поставки')
+}
+function openEditDeliveryModal(d) {
+  alert('Заглушка: откроется модалка для редактирования поставки: ' + d.name)
+}
+function deleteDelivery(d) {
+  if (confirm(`Удалить поставку "${d.name}" от ${d.supplier}?`)) {
+    deliveriesList.value = deliveriesList.value.filter(x => x.id !== d.id)
+  }
+}
+function exportDeliveriesToExcel() {
+  alert('Заглушка экспорта. Тут будет экспорт в Excel')
+}
+
+// Форматирование даты, чтобы не падало
 
 const filteredChartData = computed(() => {
   return {
@@ -405,7 +521,7 @@ function openEditModal(stock) {
 
   stockToEdit.value = {
     ...stock,
-    item_id: stock.item_id, // или stock.item_id — зависит от названия
+    item_id: stock.item_id,
     warehouse_id: warehouse?.warehouse_id
   }
 
@@ -540,6 +656,11 @@ onMounted(() => {
       warehouse: s.warehouse,
       quantity: s.quantity
     }))
+  })
+  GetInboundDetails().then(data => {
+    deliveriesList.value = data
+  }).catch(err => {
+    console.error("Ошибка загрузки поставок:", err)
   })
   GetTopItems().then(data => topItems.value = data)
   GetWarehouses().then(data => warehouses.value.push(...data))

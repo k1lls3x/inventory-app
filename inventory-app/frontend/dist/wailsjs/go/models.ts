@@ -37,6 +37,28 @@ export namespace model {
 	        this.total = source["total"];
 	    }
 	}
+	export class InboundDetails {
+	    date: string;
+	    name: string;
+	    sku: string;
+	    supplier: string;
+	    quantity: number;
+	    warehouse: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new InboundDetails(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.date = source["date"];
+	        this.name = source["name"];
+	        this.sku = source["sku"];
+	        this.supplier = source["supplier"];
+	        this.quantity = source["quantity"];
+	        this.warehouse = source["warehouse"];
+	    }
+	}
 	export class Item {
 	    item_id: number;
 	    sku: string;

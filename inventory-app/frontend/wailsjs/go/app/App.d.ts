@@ -9,7 +9,7 @@ export function AddStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
 export function ChangeStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
-export function ExportStockToExcel(arg1:string):Promise<void>;
+export function ExportStockToExcel():Promise<string>;
 
 export function FindItems(arg1:model.ItemFilter):Promise<Array<model.Item>>;
 
@@ -18,6 +18,8 @@ export function FindStockByWarehouse(arg1:number):Promise<Array<model.ItemWithSt
 export function GetAllItems():Promise<Array<model.ItemBrief>>;
 
 export function GetDashboard():Promise<dashboard.DashboardData>;
+
+export function GetInboundDetails():Promise<Array<model.InboundDetails>>;
 
 export function GetItems():Promise<Array<model.Item>>;
 

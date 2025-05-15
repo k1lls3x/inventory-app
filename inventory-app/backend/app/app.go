@@ -80,8 +80,8 @@ func (a *App) AddStock(itemID, quantity, warehouseID int) error {
 	return repository.AddStock( itemID, quantity, warehouseID)
 }
 
-func (a *App) ExportStockToExcel(path string) error {
-	return export.ExportStockToExcel(path)
+func (a *App)ExportStockToExcel() (string, error)  {
+	return Export.ExportStockToExcel()
 }
 
 func (a *App) GetWeeklyStockTrend() ([]model.DailyStock, error) {
@@ -102,7 +102,6 @@ func (a *App)  UpdateItem(item model.Item) error {
 	return repository.UpdateItem(item)
 }
 
-
 func (a *App) RemoveItem(sku string) error {
 	return repository.RemoveItem(sku)
 }
@@ -111,11 +110,16 @@ func (a *App) AddItem(item model.Item) error {
 	return repository.AddItem(item)
 }
 
-func (a *App)  FindItems(filter model.ItemFilter) ([]model.Item, error) {
+func (a *App) FindItems(filter model.ItemFilter) ([]model.Item, error) {
 	return repository.FindItems(filter)
 }
 
 //-----------------------Warehouse---------------------------------\\
-func (a *App)   GetWarehouses() ([]model.Warehouse, error) {
+func (a *App) GetWarehouses() ([]model.Warehouse, error) {
 	return repository.GetWarehouses()
+}
+//-----------------------Indbound---------------------------------\\
+
+func (a *App) GetInboundDetails()([]model.InboundDetails,error){
+	return repository.GetInboundDetails()
 }

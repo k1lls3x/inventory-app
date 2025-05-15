@@ -83,8 +83,6 @@ type ItemWithStock struct {
 	Quantity    int    `json:"quantity" db:"quantity"`
 }
 
-
-
 type ItemFilter struct {
 	SKU       *string
 	Name      *string
@@ -102,4 +100,13 @@ type ItemBrief struct {
 type DailyStock struct {
 	Date  string `json:"date"`
 	Total int    `json:"total"`
+}
+
+type InboundDetails struct {
+	Date string `json:"date"`
+	Name string `json:"name"`
+	Sku string `json:"sku"`
+	Supplier string `json:"supplier"`
+	Quantity int `json:"quantity"`
+	Warehouse string `json:"warehouse"`
 }
