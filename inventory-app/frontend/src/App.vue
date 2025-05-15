@@ -219,7 +219,7 @@
                 <td>{{ stock.quantity }}</td>
                 <td>
                   <button @click="openEditModal(stock)">✏️</button>
-                  <button @click="deleteStock(stock.id)">🗑️</button>
+                  <button @click="deleteStock(stock)">🗑️</button>
                 </td>
               </tr>
             </tbody>
@@ -234,6 +234,35 @@
   </div>
 </template>
 
+<script>
+export default {
+  methods: {
+    exportToExcel() {
+      // window.runtime и window.go теперь определены!
+      if (!window.runtime || !window.runtime.SaveDialog) {
+        alert("Wails API не найден! Запусти через wails dev или из exe-файла.");
+        return;
+      }
+      window.runtime.SaveDialog({
+        title: "Сохранить как Excel",
+        defaultPath: "export.xlsx",
+        filters: [
+          { name: "Excel Files", extensions: ["xlsx"] }
+        ]
+      }).then(filePath => {
+        if (!filePath) {
+          alert("Файл не выбран!");
+          return;
+        }
+        window.go.app.App.ExportStockToExcel(filePath)
+          .then(() => alert("Файл успешно сохранён!"))
+          .catch(err => alert("Ошибка экспорта: " + err));
+      });
+    }
+  }
+}
+</script>
+
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import BarChart from './components/BarChart.vue'
@@ -241,6 +270,9 @@ import LineChart from './components/LineChart.vue'
 import { GetWeeklyStockTrend } from '../wailsjs/go/app/App'
 import { ChangeStock } from '../wailsjs/go/app/App'
 import { GetStockDetails } from '../wailsjs/go/app/App'
+import { RemoveStock } from '../wailsjs/go/app/App'
+import { ExportStockToExcel } from '../wailsjs/go/app/App'
+
 import {
   GetDashboard,
   GetTopItems,
@@ -292,6 +324,37 @@ const weeklyStockChartData = computed(() => ({
     }
   ]
 }))
+
+function deleteStock(stock) {
+  if (!confirm(`Удалить остаток товара "${stock.name}" со склада "${stock.warehouse}"?`)) {
+    return
+  }
+
+  RemoveStock(stock.stock_id)
+    .then(() => {
+      const reload = selectedWarehouseId.value === 0
+        ? GetStockDetails
+        : () => FindStockByWarehouse(selectedWarehouseId.value)
+
+      reload().then(data => {
+        stockList.value = data.map(s => ({
+          id: s.stock_id,
+          stock_id: s.stock_id,
+          item_id: s.item_id,
+          warehouse_id: s.warehouse_id,
+          name: s.name,
+          sku: s.sku,
+          warehouse: s.warehouse,
+          quantity: s.quantity
+        }))
+      })
+    })
+    .catch(err => {
+      alert("Ошибка при удалении")
+      console.error(err)
+    })
+}
+
 
 const filteredChartData = computed(() => {
   return {
@@ -365,17 +428,18 @@ function confirmEditStock() {
       closeEditModal()
       // Обновление данных
       if (selectedWarehouseId.value === 0) {
-                GetStockDetails().then(data => {
-          stockList.value = data.map(s => ({
-            id: s.item_id,               // обязательно для v-for :key
-            item_id: s.item_id,          // нужно для ChangeStock
-            warehouse_id: s.warehouse_id, // нужно для ChangeStock
-            name: s.name,
-            sku: s.sku,
-            warehouse: s.warehouse,
-            quantity: s.quantity
-          }))
-        })      } else {
+        GetStockDetails().then(data => {
+  stockList.value = data.map(s => ({
+    id: s.stock_id,
+    stock_id: s.stock_id,
+    item_id: s.item_id,
+    warehouse_id: s.warehouse_id,
+    name: s.name,
+    sku: s.sku,
+    warehouse: s.warehouse,
+    quantity: s.quantity
+  }))
+})      } else {
         FindStockByWarehouse(selectedWarehouseId.value).then(data => {
           stockList.value = data.map(s => ({
             id: s.item_id,
@@ -421,15 +485,16 @@ function confirmAddStock() {
     closeAddModal()
     if (selectedWarehouseId.value === 0) {
       GetStockDetails().then(data => {
-          stockList.value = data.map(s => ({
-            id: s.item_id,                // ← важно для v-for :key
-            item_id: s.item_id,           // ← нужно для ChangeStock
-            warehouse_id: s.warehouse_id, // ← нужно для ChangeStock
-            name: s.name,
-            sku: s.sku,
-            warehouse: s.warehouse,
-            quantity: s.quantity
-          }))
+        stockList.value = data.map(s => ({
+          id: s.stock_id, // ✅ нужно для deleteStock(stock)
+          stock_id: s.stock_id, // опционально, если хочешь сохранять явно
+          item_id: s.item_id,
+          warehouse_id: s.warehouse_id,
+          name: s.name,
+          sku: s.sku,
+          warehouse: s.warehouse,
+          quantity: s.quantity
+        }))
         })
     } else {
       FindStockByWarehouse(selectedWarehouseId.value).then(data => {
@@ -464,10 +529,11 @@ onMounted(() => {
     monthlyOrders.value = data.monthly_orders
     newItems.value = data.new_items
   })
-  GetStockDetails().then(data => {
+    GetStockDetails().then(data => {
     stockList.value = data.map(s => ({
-      id: s.item_id,               // обязательно для :key
-      item_id: s.item_id,          // нужно для ChangeStock
+      id: s.stock_id, // 👈 обязательно
+      stock_id: s.stock_id,
+      item_id: s.item_id,
       warehouse_id: s.warehouse_id,
       name: s.name,
       sku: s.sku,
@@ -496,19 +562,34 @@ watch(currentTab, (tab) => {
 watch(selectedWarehouseId, (id) => {
   const warehouseId = Number(id)
   if (warehouseId === 0) {
-    GetStockDetails().then(data => stockList.value = data)
+    GetStockDetails().then(data => {
+      stockList.value = data.map(s => ({
+        id: s.stock_id,
+        stock_id: s.stock_id,
+        item_id: s.item_id,
+        warehouse_id: s.warehouse_id,
+        name: s.name,
+        sku: s.sku,
+        warehouse: s.warehouse,
+        quantity: s.quantity
+      }))
+    })
   } else {
     FindStockByWarehouse(warehouseId).then(data => {
       stockList.value = data.map(s => ({
-        id: s.item_id,
+        id: s.stock_id,
+        stock_id: s.stock_id,
+        item_id: s.item_id,
+        warehouse_id: s.warehouse_id,
         name: s.name,
         sku: s.sku,
-        warehouse: warehouses.value.find(w => w.warehouse_id === warehouseId)?.name || '',
+        warehouse: warehouses.value.find(w => w.warehouse_id === warehouseId)?.name || s.warehouse,
         quantity: s.quantity
       }))
     })
   }
 })
+
 
 const filteredStockList = computed(() =>
   stockList.value.filter(item =>

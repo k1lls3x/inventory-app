@@ -4,10 +4,12 @@ import (
 	"context"
 	"inventory-app/backend/internal/db"
 	"inventory-app/backend/internal/handler/dashboard"
-	"inventory-app/backend/logs"
+	"inventory-app/backend/internal/handler/export"
+_	"inventory-app/backend/logs"
 	"inventory-app/backend/internal/model"
 	"inventory-app/backend/internal/repository"
-
+"log"
+"os"
 )
 
 // App struct
@@ -26,9 +28,25 @@ func (a *App) GetTurnoverByWarehouse() ([]model.ItemTurnoverByWarehouse, error) 
 }
 // Startup is called when the app starts
 func (a *App) Startup(ctx context.Context) {
-	a.ctx = ctx
-	logs.Init()
-	db.Init()
+	  // === ЛОГИРОВАНИЕ В ФАЙЛ ===
+    logFile, err := os.OpenFile("logs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+    if err != nil {
+        // Если не получилось открыть файл, логируем в стандартный вывод
+        log.Println("Ошибка открытия файла логов:", err)
+    } else {
+        log.SetOutput(logFile)
+        log.Println("=== Приложение запущено ===")
+    }
+
+    a.ctx = ctx
+
+    log.Println("Startup: инициализация логирования")
+   // logs.Init()
+
+    log.Println("Startup: инициализация базы данных")
+    db.Init()
+
+    log.Println("Startup: завершён")
 
 }
 
@@ -46,8 +64,8 @@ func (a *App) ChangeStock(itemID, warehouseID, newQuantity int) error{
 	return repository.ChangeStock(itemID, warehouseID, newQuantity)
 }
 
-func (a *App) RemoveStock(itemID, warehouseID int) error {
-	return repository.RemoveStock(itemID, warehouseID)
+func (a *App) RemoveStock(stockID int) error {
+	return repository.RemoveStock(stockID)
 }
 
 func (a *App) GetStockDetails() ([]model.ItemWithStock, error){
@@ -60,6 +78,10 @@ func (a *App) GetStocks() ([]model.Stock, error) {
 
 func (a *App) AddStock(itemID, quantity, warehouseID int) error {
 	return repository.AddStock( itemID, quantity, warehouseID)
+}
+
+func (a *App) ExportStockToExcel(path string) error {
+	return export.ExportStockToExcel(path)
 }
 
 func (a *App) GetWeeklyStockTrend() ([]model.DailyStock, error) {

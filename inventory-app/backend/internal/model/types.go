@@ -74,6 +74,7 @@ type ItemTurnoverByWarehouse struct {
 }
 
 type ItemWithStock struct {
+	StockID     int    `json:"stock_id" db:"stock_id"`
 	ItemID      int    `json:"item_id" db:"item_id"`
 	WarehouseID int    `json:"warehouse_id" db:"warehouse_id"`
 	Name        string `json:"name" db:"name"`
@@ -81,6 +82,8 @@ type ItemWithStock struct {
 	Warehouse   string `json:"warehouse" db:"warehouse"`
 	Quantity    int    `json:"quantity" db:"quantity"`
 }
+
+
 
 type ItemFilter struct {
 	SKU       *string
