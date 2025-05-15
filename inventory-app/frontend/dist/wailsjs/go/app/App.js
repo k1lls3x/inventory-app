@@ -38,6 +38,10 @@ export function GetInboundDetails() {
   return window['go']['app']['App']['GetInboundDetails']();
 }
 
+export function GetInboundDetailsByDate(arg1) {
+  return window['go']['app']['App']['GetInboundDetailsByDate'](arg1);
+}
+
 export function GetItems() {
   return window['go']['app']['App']['GetItems']();
 }

@@ -226,83 +226,85 @@
           </table>
         </div>
       </section>
-          <section v-else-if="currentTab === 'Поставки'" class="table-section">
-      <div class="filter-controls">
-        <div class="filter-row">
-          <div class="filter-group">
-            <label>📦 Склад</label>
-            <select v-model="selectedDeliveryWarehouse" class="input">
-              <option value="0">Все склады</option>
-              <option
-                v-for="wh in warehouses"
-                :key="wh.warehouse_id"
-                :value="wh.warehouse_id"
-              >
-                {{ wh.name }}
-              </option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>🔍 Поиск</label>
-            <input
-              type="text"
-              class="input"
-              v-model="deliverySearchQuery"
-              placeholder="Название, SKU или поставщик"
-            />
-          </div>
-          <div class="filter-group button-group">
-            <label>&nbsp;</label>
-            <button class="add-button" @click="openAddDeliveryModal">➕ Добавить поставку</button>
-          </div>
-        </div>
+      <section v-else-if="currentTab === 'Поставки'" class="table-section">
+  <div class="filter-controls">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>📅 Дата</label>
+        <input
+            type="date"
+      class="input"
+      v-model="selectedDeliveryDate"
+      :max="'3030-12-31'">
       </div>
-      <!-- Модалка для добавления поставки по аналогии -->
-      <!-- <div v-if="showAddDeliveryModal"> ... </div> -->
+      <div class="filter-group">
+        <label>🔍 Поиск</label>
+        <input
+          type="text"
+          class="input"
+          v-model="deliverySearchQuery"
+          placeholder="Название, SKU или поставщик">
+      </div>
+      <div class="filter-group button-group">
+        <label>&nbsp;</label>
+        <button class="add-button" @click="openAddDeliveryModal">
+          ➕ Добавить поставку
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Модалка для добавления поставки по аналогии -->
+  <!-- <div v-if="showAddDeliveryModal"> ... </div> -->
 
-      <div class="fade-in">
-        <div class="table-header">
-          <p class="title">Поставки</p>
-          <button class="export-button" @click="exportDeliveriesToExcel">📤 Экспорт в Excel</button>
-        </div>
-        <div class="chart-segment">
-          <BarChart
-            v-if="filteredDeliveriesChartData.datasets[0].data.length"
-            :data="filteredDeliveriesChartData"
-          />
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Дата</th>
-              <th>Наименование</th>
-              <th>SKU</th>
-              <th>Склад</th>
-              <th>Поставщик</th>
-              <th>Количество</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="d in filteredDeliveriesList" :key="d.id">
-              <td>{{ formatDate(d.date) }}</td>
-              <td>{{ d.name }}</td>
-              <td>{{ d.sku }}</td>
-              <td>{{ d.warehouse }}</td>
-              <td>{{ d.supplier }}</td>
-              <td>{{ d.quantity }}</td>
-              <td>
-                <button @click="openEditDeliveryModal(d)">✏️</button>
-                <button @click="deleteDelivery(d)">🗑️</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-      <section v-else>
-        <p>Раздел "{{ currentTab }}" в разработке...</p>
-      </section>
+  <div class="fade-in">
+    <div class="table-header">
+      <p class="title">Поставки</p>
+      <button class="export-button" @click="exportDeliveriesToExcel">
+        📤 Экспорт в Excel
+      </button>
+    </div>
+    <div class="chart-segment">
+      <BarChart
+        v-if="filteredDeliveriesChartData.datasets[0].data.length"
+        :data="filteredDeliveriesChartData"
+      />
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Наименование</th>
+          <th>SKU</th>
+          <th>Склад</th>
+          <th>Поставщик</th>
+          <th>Количество</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="d in filteredDeliveriesList" :key="d.id">
+          <td>{{ d.date }}</td>
+          <td>{{ d.name }}</td>
+          <td>{{ d.sku }}</td>
+          <td>{{ d.warehouse }}</td>
+          <td>{{ d.supplier }}</td>
+          <td>{{ d.quantity }}</td>
+          <td>
+            <button @click="openEditDeliveryModal(d)">✏️</button>
+            <button @click="deleteDelivery(d)">🗑️</button>
+          </td>
+        </tr>
+
+      </tbody>
+      <div v-if="filteredDeliveriesList.length === 0" class="empty-message" style="text-align:center; color:#888; margin: 1.5rem 0;">
+  Нет поставок за выбранную дату
+</div>
+    </table>
+  </div>
+</section>
+<section v-else>
+  <p>Раздел "{{ currentTab }}" в разработке...</p>
+</section>
     </main>
   </div>
 </template>
@@ -351,7 +353,8 @@ import {
   GetWarehouses,
   AddStock,
   GetAllItems,
-  GetInboundDetails
+  GetInboundDetails,
+  GetInboundDetailsByDate
 } from '../wailsjs/go/app/App'
 
 const tabs = [
@@ -427,19 +430,29 @@ function deleteStock(stock) {
     })
 }
 
-const deliveriesList = ref([])
 
 const selectedDeliveryWarehouse = ref(0)
-const deliverySearchQuery = ref('')
+const selectedDeliveryDate = ref("")
+const deliverySearchQuery = ref("")
+const deliveriesList = ref([])
+
+watch(selectedDeliveryDate, (date) => {
+  if (date) {
+    GetInboundDetailsByDate(date).then(data => {
+      deliveriesList.value = data
+    })
+  } else {
+    GetInboundDetails().then(data => {
+      deliveriesList.value = data
+    });
+  }
+})
 
 const filteredDeliveriesList = computed(() =>
   deliveriesList.value.filter(d =>
-    (selectedDeliveryWarehouse.value === 0 || d.warehouse_id === selectedDeliveryWarehouse.value) &&
-    (
-      d.name.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()) ||
-      d.sku.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()) ||
-      (d.supplier && d.supplier.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()))
-    )
+    d.name.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()) ||
+    d.sku.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()) ||
+    (d.supplier && d.supplier.toLowerCase().includes(deliverySearchQuery.value.toLowerCase()))
   )
 )
 
@@ -512,8 +525,13 @@ const turnoverLineChartData = computed(() => ({
 }))
 
 function formatDate(dateStr) {
-  const options = { day: '2-digit', month: 'short' }
-  return new Date(dateStr).toLocaleDateString('ru-RU', options)
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
 }
 
 function openEditModal(stock) {

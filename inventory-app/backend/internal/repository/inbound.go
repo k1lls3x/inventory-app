@@ -28,3 +28,27 @@ ORDER BY i.received_at DESC;
 
 	return items,err
 }
+
+func GetInboundDetailsByDate(date string)([]model.InboundDetails,error){
+	var items []model.InboundDetails
+	query := `
+						SELECT
+							to_char(i.received_at, 'DD.MM.YYYY') AS date, -- вот так!
+							it.name AS name,
+							it.sku AS sku,
+							s.name AS supplier,
+							i.quantity AS quantity,
+							w.name AS warehouse
+					FROM inbound i
+					JOIN item it ON i.item_id = it.item_id
+					JOIN supplier s ON i.supplier_id = s.supplier_id
+					JOIN warehouse w ON i.warehouse_id = w.warehouse_id
+					WHERE DATE(i.received_at) = $1
+					ORDER BY i.received_at DESC;
+	`
+	err := db.DB.Select(&items, query,date)
+	if err != nil {
+		log.Println("❌ Произошла ошибка при получении поставок", err)
+	}
+	return items, err
+}

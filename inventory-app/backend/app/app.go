@@ -123,3 +123,7 @@ func (a *App) GetWarehouses() ([]model.Warehouse, error) {
 func (a *App) GetInboundDetails()([]model.InboundDetails,error){
 	return repository.GetInboundDetails()
 }
+
+func (a *App) GetInboundDetailsByDate(date string)([]model.InboundDetails,error){
+	return repository.GetInboundDetailsByDate(date)
+}

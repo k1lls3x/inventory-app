@@ -21,6 +21,8 @@ export function GetDashboard():Promise<dashboard.DashboardData>;
 
 export function GetInboundDetails():Promise<Array<model.InboundDetails>>;
 
+export function GetInboundDetailsByDate(arg1:string):Promise<Array<model.InboundDetails>>;
+
 export function GetItems():Promise<Array<model.Item>>;
 
 export function GetStockDetails():Promise<Array<model.ItemWithStock>>;
