@@ -62,8 +62,6 @@ type Warehouse struct {
 	Location    *string `db:"location" json:"location"`
 }
 
-
-
 //---------------------------------------------------------------\\
 type ItemTurnoverByWarehouse struct {
 	Warehouse string `db:"warehouse" json:"warehouse"`
@@ -103,10 +101,11 @@ type DailyStock struct {
 }
 
 type InboundDetails struct {
-	Date string `json:"date"`
-	Name string `json:"name"`
-	Sku string `json:"sku"`
-	Supplier string `json:"supplier"`
-	Quantity int `json:"quantity"`
-	Warehouse string `json:"warehouse"`
+	InboundID int    `db:"inbound_id" json:"inbound_id"`
+	Date      string `db:"date" json:"date"`
+	Name      string `db:"name" json:"name"`
+	Sku       string `db:"sku" json:"sku"`
+	Supplier  string `db:"supplier" json:"supplier"`
+	Quantity  int    `db:"quantity" json:"quantity"`
+	Warehouse string `db:"warehouse" json:"warehouse"`
 }

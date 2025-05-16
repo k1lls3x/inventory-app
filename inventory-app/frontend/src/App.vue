@@ -227,80 +227,318 @@
         </div>
       </section>
       <section v-else-if="currentTab === 'Поставки'" class="table-section">
+
+<!-- Фильтры -->
+<div class="filter-controls">
+  <div class="filter-row">
+    <div class="filter-group">
+      <label>📅 Дата</label>
+      <input
+        type="date"
+        class="input"
+        v-model="selectedDeliveryDate"
+        :max="'3030-12-31'" />
+    </div>
+    <div class="filter-group">
+      <label>🔍 Поиск</label>
+      <input
+        type="text"
+        class="input"
+        v-model="deliverySearchQuery"
+        placeholder="Название, SKU или поставщик">
+    </div>
+    <div class="filter-group button-group">
+      <label>&nbsp;</label>
+      <button class="add-button" @click="openAddDeliveryModal">
+        ➕ Добавить поставку
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка ДОБАВИТЬ поставку -->
+<div
+  v-if="showAddDeliveryModal"
+  class="modal-overlay"
+  @click.self="closeAddDeliveryModal"
+>
+  <div class="modal">
+    <h3>Добавить поставку</h3>
+    <div class="form-group">
+      <label for="inbound-item">Товар</label>
+      <select v-model.number="newInbound.item_id" id="inbound-item">
+        <option disabled value="0">Выберите товар</option>
+        <option
+          v-for="item in items"
+          :key="item.item_id"
+          :value="item.item_id"
+        >
+          {{ item.name }} ({{ item.sku }})
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="inbound-supplier">Поставщик</label>
+      <select v-model.number="newInbound.supplier_id" id="inbound-supplier">
+        <option disabled value="0">Выберите поставщика</option>
+        <option
+          v-for="sup in suppliers"
+          :key="sup.supplier_id"
+          :value="sup.supplier_id"
+        >
+          {{ sup.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="inbound-warehouse">Склад</label>
+      <select v-model.number="newInbound.warehouse_id" id="inbound-warehouse">
+        <option disabled value="0">Выберите склад</option>
+        <option
+          v-for="wh in warehouses"
+          :key="wh.warehouse_id"
+          :value="wh.warehouse_id"
+        >
+          {{ wh.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="inbound-quantity">Количество</label>
+      <input
+        type="number"
+        min="1"
+        v-model.number="newInbound.quantity"
+        id="inbound-quantity"
+      />
+    </div>
+    <div class="form-group">
+      <label for="inbound-date">Дата поступления</label>
+      <input
+        type="date"
+        v-model="newInbound.received_at"
+        id="inbound-date"
+        :max="'3030-12-31'"
+      />
+    </div>
+    <div class="modal-actions">
+      <button @click="confirmAddDelivery">💾 Сохранить</button>
+      <button @click="closeAddDeliveryModal">❌ Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка РЕДАКТИРОВАТЬ поставку -->
+<div
+  v-if="showEditDeliveryModal && deliveryToEdit"
+  class="modal-overlay"
+  @click.self="closeEditDeliveryModal"
+>
+  <div class="modal">
+    <h3>Редактировать поставку</h3>
+    <div class="form-group">
+      <label for="edit-inbound-item">Товар</label>
+      <select v-model.number="deliveryToEdit.item_id" id="edit-inbound-item">
+        <option disabled value="0">Выберите товар</option>
+        <option
+          v-for="item in items"
+          :key="item.item_id"
+          :value="item.item_id"
+        >
+          {{ item.name }} ({{ item.sku }})
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="edit-inbound-supplier">Поставщик</label>
+      <select v-model.number="deliveryToEdit.supplier_id" id="edit-inbound-supplier">
+        <option disabled value="0">Выберите поставщика</option>
+        <option
+          v-for="sup in suppliers"
+          :key="sup.supplier_id"
+          :value="sup.supplier_id"
+        >
+          {{ sup.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="edit-inbound-warehouse">Склад</label>
+      <select v-model.number="deliveryToEdit.warehouse_id" id="edit-inbound-warehouse">
+        <option disabled value="0">Выберите склад</option>
+        <option
+          v-for="wh in warehouses"
+          :key="wh.warehouse_id"
+          :value="wh.warehouse_id"
+        >
+          {{ wh.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="edit-inbound-quantity">Количество</label>
+      <input
+        type="number"
+        min="1"
+        v-model.number="deliveryToEdit.quantity"
+        id="edit-inbound-quantity"
+      />
+    </div>
+    <div class="form-group">
+      <label for="edit-inbound-date">Дата поступления</label>
+      <input
+        type="date"
+        v-model="deliveryToEdit.received_at"
+        id="edit-inbound-date"
+        :max="'3030-12-31'"
+      />
+    </div>
+    <div class="modal-actions">
+      <button @click="confirmEditDelivery">💾 Сохранить</button>
+      <button @click="closeEditDeliveryModal">❌ Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Таблица и остальные элементы -->
+<div class="fade-in">
+  <div class="table-header">
+    <p class="title">Поставки</p>
+    <button class="export-button" @click="exportDeliveriesToExcel">
+      📤 Экспорт в Excel
+    </button>
+  </div>
+  <div class="chart-segment">
+    <BarChart
+      v-if="filteredDeliveriesChartData.datasets[0].data.length"
+      :data="filteredDeliveriesChartData"
+    />
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Наименование</th>
+        <th>SKU</th>
+        <th>Склад</th>
+        <th>Поставщик</th>
+        <th>Количество</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="d in filteredDeliveriesList" :key="d.id">
+        <td>{{ formatDate(d.date) }}</td>
+        <td>{{ d.name }}</td>
+        <td>{{ d.sku }}</td>
+        <td>{{ d.warehouse }}</td>
+        <td>{{ d.supplier }}</td>
+        <td>{{ d.quantity }}</td>
+        <td>
+          <button @click="openEditDeliveryModal(d)">✏️</button>
+          <button @click="deleteDelivery(d)">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+    <div v-if="filteredDeliveriesList.length === 0" class="empty-message" style="text-align:center; color:#888; margin: 1.5rem 0;">
+      Нет поставок за выбранную дату
+    </div>
+  </table>
+</div>
+</section>
+
+<section v-else-if="currentTab === 'Товары'" class="table-section">
   <div class="filter-controls">
     <div class="filter-row">
-      <div class="filter-group">
-        <label>📅 Дата</label>
-        <input
-            type="date"
-      class="input"
-      v-model="selectedDeliveryDate"
-      :max="'3030-12-31'">
-      </div>
       <div class="filter-group">
         <label>🔍 Поиск</label>
         <input
           type="text"
           class="input"
-          v-model="deliverySearchQuery"
-          placeholder="Название, SKU или поставщик">
+          v-model="itemSearch"
+          placeholder="Название, SKU или категория"
+        />
+      </div>
+      <div class="filter-group">
+        <label>Категория</label>
+        <select v-model="selectedCategory" class="input">
+          <option value="">Все категории</option>
+          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+        </select>
       </div>
       <div class="filter-group button-group">
         <label>&nbsp;</label>
-        <button class="add-button" @click="openAddDeliveryModal">
-          ➕ Добавить поставку
+        <button class="add-button" @click="openAddItemModal">
+          ➕ Добавить товар
         </button>
       </div>
     </div>
   </div>
-  <!-- Модалка для добавления поставки по аналогии -->
-  <!-- <div v-if="showAddDeliveryModal"> ... </div> -->
 
+  <!-- Статистика по товарам -->
+  <div class="cards" style="margin-bottom: 1.5rem;">
+    <div class="card">
+      <p class="title">Всего товаров</p>
+      <p class="value">{{ items.length }}</p>
+    </div>
+    <div class="card">
+      <p class="title">Категорий</p>
+      <p class="value">{{ categories.length }}</p>
+    </div>
+    <div class="card">
+      <p class="title">Наименьший остаток</p>
+      <p class="value" :class="{'note': true, 'positive': minStock > 10, 'negative': minStock <= 10}">
+        {{ minStock }}
+      </p>
+    </div>
+    <div class="card">
+      <p class="title">Наибольший остаток</p>
+      <p class="value">{{ maxStock }}</p>
+    </div>
+  </div>
+
+  <!-- Таблица товаров -->
   <div class="fade-in">
     <div class="table-header">
-      <p class="title">Поставки</p>
-      <button class="export-button" @click="exportDeliveriesToExcel">
+      <p class="title">Товары</p>
+      <button class="export-button" @click="exportItemsToExcel">
         📤 Экспорт в Excel
       </button>
-    </div>
-    <div class="chart-segment">
-      <BarChart
-        v-if="filteredDeliveriesChartData.datasets[0].data.length"
-        :data="filteredDeliveriesChartData"
-      />
     </div>
     <table>
       <thead>
         <tr>
-          <th>Дата</th>
           <th>Наименование</th>
           <th>SKU</th>
-          <th>Склад</th>
-          <th>Поставщик</th>
-          <th>Количество</th>
+          <th>Категория</th>
+          <th>Ед. изм.</th>
+          <th>Мин. остаток</th>
+          <th>Описание</th>
           <th>Действия</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="d in filteredDeliveriesList" :key="d.id">
-          <td>{{ d.date }}</td>
-          <td>{{ d.name }}</td>
-          <td>{{ d.sku }}</td>
-          <td>{{ d.warehouse }}</td>
-          <td>{{ d.supplier }}</td>
-          <td>{{ d.quantity }}</td>
+        <tr v-for="item in filteredItems" :key="item.item_id">
+          <td>{{ item.name }}</td>
+          <td>{{ item.sku }}</td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.unit }}</td>
+          <td>{{ item.min_stock }}</td>
+          <td>{{ item.description }}</td>
           <td>
-            <button @click="openEditDeliveryModal(d)">✏️</button>
-            <button @click="deleteDelivery(d)">🗑️</button>
+            <button @click="openEditItemModal(item)">✏️</button>
+            <button @click="deleteItem(item)">🗑️</button>
           </td>
         </tr>
-
       </tbody>
-      <div v-if="filteredDeliveriesList.length === 0" class="empty-message" style="text-align:center; color:#888; margin: 1.5rem 0;">
-  Нет поставок за выбранную дату
-</div>
+      <div v-if="filteredItems.length === 0" class="empty-message" style="text-align:center; color:#888; margin: 1.5rem 0;">
+        Нет товаров по фильтру
+      </div>
     </table>
   </div>
+
+  <!-- Модалки добавить/редактировать (аналогично поставкам) -->
+  <!-- ... -->
 </section>
 <section v-else>
   <p>Раздел "{{ currentTab }}" в разработке...</p>
@@ -354,7 +592,12 @@ import {
   AddStock,
   GetAllItems,
   GetInboundDetails,
-  GetInboundDetailsByDate
+  GetInboundDetailsByDate,
+  AddInbound,
+  GetSuppliers,
+  DeleteInbound,
+  EditInbound
+
 } from '../wailsjs/go/app/App'
 
 const tabs = [
@@ -367,6 +610,8 @@ const tabs = [
   'Движения'
 ]
 
+const showEditDeliveryModal = ref(false)
+const deliveryToEdit = ref(null)
 const showEditModal = ref(false)
 const stockToEdit = ref(null)
 const warehouses = ref([])
@@ -381,6 +626,126 @@ const newItems = ref(0)
 const topItems = ref([])
 const turnoverData = ref([])
 const weeklyStockData = ref([])
+const showAddDeliveryModal = ref(false)
+const newInbound = ref({
+  item_id: 0,
+  supplier_id: 0,
+  warehouse_id: 0,
+  quantity: 1,
+  received_at: "",
+})
+const suppliers = ref([]) // список поставщиков
+
+function openAddDeliveryModal() {
+  showAddDeliveryModal.value = true
+}
+
+  function openEditDeliveryModal(delivery) {
+  let date = delivery.received_at
+  if (typeof date === "string" && date.includes(".")) {
+    // DD.MM.YYYY -> YYYY-MM-DD
+    const [dd, mm, yyyy] = date.split(".");
+    date = `${yyyy}-${mm}-${dd}`;
+  }
+  deliveryToEdit.value = {
+    ...delivery,
+    received_at: date ? date.substring(0, 10) : ""
+  }
+  showEditDeliveryModal.value = true
+}
+
+// Закрыть модалку
+function closeEditDeliveryModal() {
+  showEditDeliveryModal.value = false
+  deliveryToEdit.value = null
+}
+
+// Подтвердить редактирование
+function confirmEditDelivery() {
+  if (
+    !deliveryToEdit.value.item_id ||
+    !deliveryToEdit.value.supplier_id ||
+    !deliveryToEdit.value.warehouse_id ||
+    !deliveryToEdit.value.quantity ||
+    deliveryToEdit.value.quantity <= 0 ||
+    !deliveryToEdit.value.received_at
+  ) {
+    alert("Заполните все поля");
+    return;
+  }
+  // Собираем payload для Go backend
+  const receivedAt = deliveryToEdit.value.received_at
+  ? new Date(deliveryToEdit.value.received_at).toISOString()
+  : undefined;
+
+const payload = {
+  inbound_id: deliveryToEdit.value.inbound_id,
+  item_id: deliveryToEdit.value.item_id,
+  supplier_id: deliveryToEdit.value.supplier_id,
+  warehouse_id: deliveryToEdit.value.warehouse_id,
+  quantity: deliveryToEdit.value.quantity,
+  received_at: receivedAt,
+  received_by: deliveryToEdit.value.received_by || 1
+}
+  window.go.app.App.EditInbound(payload).then(() => {
+    closeEditDeliveryModal()
+    GetInboundDetails().then(data => {
+      deliveriesList.value = data || []
+    })
+  }).catch(err => {
+    alert("Ошибка при обновлении поставки")
+    console.error(err)
+  })
+}
+
+
+function closeAddDeliveryModal() {
+  showAddDeliveryModal.value = false
+  newInbound.value = {
+    item_id: 0,
+    supplier_id: 0,
+    warehouse_id: 0,
+    quantity: 1,
+    received_at: "",
+  }
+}
+
+// Эту функцию вызывай при сохранении поставки
+function confirmAddDelivery() {
+  // Простая валидация
+  if (
+    !newInbound.value.item_id ||
+    !newInbound.value.supplier_id ||
+    !newInbound.value.warehouse_id ||
+    !newInbound.value.quantity ||
+    newInbound.value.quantity <= 0
+  ) {
+    alert("Заполните все обязательные поля");
+    return;
+  }
+  const receivedAt = newInbound.value.received_at
+  ? new Date(newInbound.value.received_at).toISOString()
+  : undefined;
+  // Если дата не выбрана, на бэке ставится now()
+  const payload = {
+    item_id: newInbound.value.item_id,
+    supplier_id: newInbound.value.supplier_id,
+    warehouse_id: newInbound.value.warehouse_id,
+    quantity: newInbound.value.quantity,
+    received_at: receivedAt,
+  received_by: 1 // <-- id текущего пользователя, если есть логин; пока хардкод
+  }
+  window.go.app.App.AddInbound(payload).then(() => {
+    closeAddDeliveryModal()
+    // обновить deliveriesList после добавления
+    GetInboundDetails().then(data => {
+      deliveriesList.value = data || []
+    })
+  }).catch(err => {
+    alert("Ошибка при добавлении поставки")
+    console.error(err)
+  })
+}
 
 const weeklyStockChartData = computed(() => ({
   labels: weeklyStockData.value.map(d => formatDate(d.date)),
@@ -439,14 +804,14 @@ const deliveriesList = ref([])
 watch(selectedDeliveryDate, (date) => {
   if (date) {
     GetInboundDetailsByDate(date).then(data => {
-      deliveriesList.value = data
-    })
+      deliveriesList.value = data || [];
+    });
   } else {
     GetInboundDetails().then(data => {
-      deliveriesList.value = data
+      deliveriesList.value = data || [];
     });
   }
-})
+});
 
 const filteredDeliveriesList = computed(() =>
   deliveriesList.value.filter(d =>
@@ -468,17 +833,23 @@ const filteredDeliveriesChartData = computed(() => ({
   ]
 }))
 
-function openAddDeliveryModal() {
-  alert('Заглушка: откроется модалка для добавления поставки')
-}
-function openEditDeliveryModal(d) {
-  alert('Заглушка: откроется модалка для редактирования поставки: ' + d.name)
-}
-function deleteDelivery(d) {
-  if (confirm(`Удалить поставку "${d.name}" от ${d.supplier}?`)) {
-    deliveriesList.value = deliveriesList.value.filter(x => x.id !== d.id)
+function deleteDelivery(delivery) {
+  console.log("Удаляем поставку:", delivery);
+  if (confirm(`Удалить поставку "${delivery.name}" от "${delivery.supplier}"?`)) {
+    window.go.app.App.DeleteInbound(delivery.inbound_id || delivery.id)
+      .then(() => {
+        // обнови deliveriesList
+        GetInboundDetails().then(data => {
+          deliveriesList.value = data || [];
+        });
+      })
+      .catch(err => {
+        alert("Ошибка при удалении поставки");
+        console.error(err);
+      });
   }
 }
+
 function exportDeliveriesToExcel() {
   alert('Заглушка экспорта. Тут будет экспорт в Excel')
 }
@@ -598,7 +969,51 @@ const items = ref([])
 function openAddModal() {
   showAddModal.value = true
 }
+// Категории (генерируются из items)
+const categories = computed(() => {
+  return Array.from(new Set(items.value.map(i => i.category)));
+});
 
+// Поиск и фильтр
+const itemSearch = ref('');
+const selectedCategory = ref('');
+
+const filteredItems = computed(() =>
+  items.value.filter(i =>
+    (!selectedCategory.value || i.category === selectedCategory.value) &&
+    (
+      i.name.toLowerCase().includes(itemSearch.value.toLowerCase()) ||
+      i.sku.toLowerCase().includes(itemSearch.value.toLowerCase()) ||
+      (i.category && i.category.toLowerCase().includes(itemSearch.value.toLowerCase()))
+    )
+  )
+);
+
+// Минимальный и максимальный остаток
+const minStock = computed(() => {
+  if (items.value.length === 0) return 0;
+  return Math.min(...items.value.map(i => i.min_stock || 0));
+});
+const maxStock = computed(() => {
+  if (items.value.length === 0) return 0;
+  return Math.max(...items.value.map(i => i.min_stock || 0));
+});
+
+// Заглушки методов
+function openAddItemModal() {
+  alert('Открыть модалку добавления товара (реализуй сам)');
+}
+function openEditItemModal(item) {
+  alert('Открыть модалку редактирования товара: ' + item.name);
+}
+function deleteItem(item) {
+  if (confirm(`Удалить "${item.name}"?`)) {
+    items.value = items.value.filter(i => i.item_id !== item.item_id);
+  }
+}
+function exportItemsToExcel() {
+  alert('Заглушка экспорта товаров в Excel');
+}
 function closeAddModal() {
   showAddModal.value = false
   newStock.value = { item_id: 0, warehouse_id: 0, quantity: 0 }
@@ -663,6 +1078,7 @@ onMounted(() => {
     monthlyOrders.value = data.monthly_orders
     newItems.value = data.new_items
   })
+  GetSuppliers().then(data => suppliers.value = data || [])
     GetStockDetails().then(data => {
     stockList.value = data.map(s => ({
       id: s.stock_id, // 👈 обязательно
@@ -676,7 +1092,7 @@ onMounted(() => {
     }))
   })
   GetInboundDetails().then(data => {
-    deliveriesList.value = data
+    deliveriesList.value = data || [];
   }).catch(err => {
     console.error("Ошибка загрузки поставок:", err)
   })
@@ -740,267 +1156,5 @@ const filteredStockList = computed(() =>
 </script>
 
 <style scoped>
-.dashboard {
-  padding: 2rem;
-  background-color: #f9f9f9;
-}
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
 
-.modal {
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  width: 360px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-
-.modal h3 {
-  margin-bottom: 1rem;
-  font-size: 1.2rem;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group input,
-.form-group select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-}
-
-.chart-segment {
-  margin-bottom: 2rem;
-}
-
-.modal-actions button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.modal-actions button:first-child {
-  background-color: #2563eb;
-  color: white;
-}
-
-.modal-actions button:last-child {
-  background-color: #e5e7eb;
-}
-.stock-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  max-width: 500px;
-}
-
-.dashboard-visuals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  align-items: stretch;
-}
-
-.header {
-  margin-bottom: 2rem;
-}
-
-h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 1rem;
-}
-
-.tabs button {
-  padding: 0.6rem 1.2rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.card .title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #4b5563;
-}
-
-.card .value {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #111827;
-}
-
-.card .note {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #6b7280;
-}
-
-.table-section .title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.table-section th {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #374151;
-}
-
-.table-section td {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.tabs button:hover {
-  background-color: #f3f4f6;
-  transform: scale(1.04);
-}
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.tabs button {
-  padding: 0.5rem 1rem;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: background-color 0.15s ease, transform 0.15s ease;
-  box-shadow: none;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-
-.tabs button.active {
-  background-color: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
-}
-
-.cards {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.card {
-  flex: 1;
-  background: white;
-  border-radius: 10px;
-  padding: 1.5rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-}
-
-.card.highlight {
-  border-left: 5px solid #2563eb;
-}
-
-.card .title {
-  font-weight: 700;
-  color: #1f2937; /* почти чёрный */
-}
-
-.card .value {
-  font-size: 1.9rem;
-  font-weight: bold;
-  margin: 0.2rem 0;
-}
-
-.card .note {
-  font-size: 0.8rem;
-  color: #888;
-}
-
-.card .note.positive {
-  color: #22c55e;
-}
-
-.charts {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.chart-card {
-  flex: 1 1 45%;
-  min-width: 320px;
-  max-width: 100%;
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease-in-out;
-}
-
-
-.chart-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-.chart-card img {
-  width: 100%;
-  height: 200px;
-  border-radius: 6px;
-  object-fit: cover;
-}
-
-.table-section {
-  background: white;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.table-section table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table-section th,
-.table-section td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.table-section th {
-  background-color: #f3f4f6;
-}
-
-.table-section tr.zero-stock td {
-  color: #dc2626;
-  font-weight: bold;
-}
 </style>

@@ -5,7 +5,7 @@ import (
 	"inventory-app/backend/internal/db"
 	"inventory-app/backend/internal/handler/dashboard"
 	"inventory-app/backend/internal/handler/export"
-_	"inventory-app/backend/logs"
+"inventory-app/backend/logs"
 	"inventory-app/backend/internal/model"
 	"inventory-app/backend/internal/repository"
 "log"
@@ -41,7 +41,7 @@ func (a *App) Startup(ctx context.Context) {
     a.ctx = ctx
 
     log.Println("Startup: инициализация логирования")
-   // logs.Init()
+  	logs.Init()
 
     log.Println("Startup: инициализация базы данных")
     db.Init()
@@ -126,4 +126,19 @@ func (a *App) GetInboundDetails()([]model.InboundDetails,error){
 
 func (a *App) GetInboundDetailsByDate(date string)([]model.InboundDetails,error){
 	return repository.GetInboundDetailsByDate(date)
+}
+
+func (a *App) AddInbound(inb model.Inbound) error{
+	return repository.AddInbound(inb);
+}
+func (a *App) DeleteInbound(inboundId int) error{
+	return repository.DeleteInbound(inboundId)
+}
+
+func (a *App)  EditInbound(inb model.Inbound) error{
+	return repository.EditInbound(inb)
+}
+//-----------------------Supplier---------------------------------\\
+func (a *App)  GetSuppliers() ([]model.Supplier, error){
+	return repository.GetSuppliers()
 }

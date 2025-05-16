@@ -3,11 +3,17 @@
 import {model} from '../models';
 import {dashboard} from '../models';
 
+export function AddInbound(arg1:model.Inbound):Promise<void>;
+
 export function AddItem(arg1:model.Item):Promise<void>;
 
 export function AddStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
 export function ChangeStock(arg1:number,arg2:number,arg3:number):Promise<void>;
+
+export function DeleteInbound(arg1:number):Promise<void>;
+
+export function EditInbound(arg1:model.Inbound):Promise<void>;
 
 export function ExportStockToExcel():Promise<string>;
 
@@ -28,6 +34,8 @@ export function GetItems():Promise<Array<model.Item>>;
 export function GetStockDetails():Promise<Array<model.ItemWithStock>>;
 
 export function GetStocks():Promise<Array<model.Stock>>;
+
+export function GetSuppliers():Promise<Array<model.Supplier>>;
 
 export function GetTopItems():Promise<Array<model.ItemWithStock>>;
 
