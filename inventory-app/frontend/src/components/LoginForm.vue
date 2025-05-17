@@ -2,8 +2,11 @@
   <div class="auth-bg">
     <div class="auth-glass">
       <div class="avatar">
-        <svg width="54" height="54" fill="none" viewBox="0 0 54 54"><circle cx="27" cy="27" r="27" fill="#e8e8e8"/><path d="M27 30.6c-5.04 0-9.14 4.1-9.14 9.14h18.28c0-5.04-4.1-9.14-9.14-9.14Zm0-2.57a6.57 6.57 0 1 0 0-13.14 6.57 6.57 0 0 0 0 13.14Z" fill="#bbb"/></svg>
-      </div>
+  <svg width="54" height="54" viewBox="0 0 54 54" fill="none">
+    <circle cx="27" cy="27" r="27" fill="#f2f3f6"/>
+    <path d="M27 27c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm0 2c-5.33 0-16 2.67-16 8v3c0 1.105.895 2 2 2h28c1.105 0 2-.895 2-2v-3c0-5.33-10.67-8-16-8z" fill="#d1d5db"/>
+  </svg>
+</div>
       <h1 class="app-title">Складская система</h1>
       <div class="subtitle">Добро пожаловать! Войдите в свой аккаунт.</div>
       <form class="login-form" @submit.prevent="handleLogin">
@@ -37,7 +40,7 @@
             @input="passwordError = ''"
             autocomplete="current-password"
           />
-    
+
           <transition name="fade">
             <div class="custom-error" v-if="passwordError">{{ passwordError }}</div>
           </transition>
@@ -140,8 +143,9 @@ function toggleShowPassword() {
   box-shadow: 0 24px 64px 0 rgba(50, 60, 90, 0.22), 0 10px 36px 0 rgba(0,0,0,0.12);
 }
 .avatar {
-  width: 66px;
-  height: 66px;
+ /* больше отступ */
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   margin-bottom: 1.8rem; /* больше отступ после аватара */
   background: linear-gradient(145deg,#f7f7f7 60%,#e8e8e8 100%);
@@ -183,14 +187,14 @@ function toggleShowPassword() {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.12rem;
+  gap: 1.65rem;
   font-family: 'Inter', Arial, sans-serif;
 }
 .input-group {
-  margin-bottom: 1.35em;
+  margin-bottom: 1.25rem;
   position: relative;
   width: 100%;
-  margin-bottom: 0.5em;
+  padding-bottom: 0.2rem;
   display: flex;
   align-items: center;
 }
@@ -240,8 +244,8 @@ function toggleShowPassword() {
 .eye-icon:hover { opacity: 1; }
 input {
   width: 100%;
-  padding: 1.01rem 3.1rem 1.01rem 2.8rem; /* больше места справа под глаз */
-  font-size: 1.13rem;
+  padding: 1.15rem 3.1rem 1.15rem 2.8rem;
+    font-size: 1.13rem;
   border: 1.5px solid #dadada;
   border-radius: 16px;
   outline: none;
@@ -269,11 +273,11 @@ input.invalid {
   position: absolute;
   left: 0; right: 0;
   top: 100%;
-  margin-top: 2px;
-  padding: 0.36em 1em;
+  margin-top: 0.30rem;
+  padding: 0.42em 1.12em;
   background: #e53935;
   color: #fff;
-  font-size: 0.99em;
+  font-size: 1.04em;
   border-radius: 7px;
   box-shadow: 0 2px 10px 0 #d5bcbc2e;
   text-align: left;
