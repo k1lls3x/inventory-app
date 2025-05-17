@@ -182,7 +182,6 @@ function toggleShowPassword() {
   user-select: none;
 }
 
-
 .login-form {
   width: 100%;
   display: flex;
