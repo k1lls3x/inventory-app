@@ -44,7 +44,6 @@ export namespace model {
 	    quantity: number;
 	    // Go type: time
 	    received_at: any;
-	    received_by: number;
 	    warehouse_id: number;
 	
 	    static createFrom(source: any = {}) {
@@ -58,7 +57,6 @@ export namespace model {
 	        this.supplier_id = source["supplier_id"];
 	        this.quantity = source["quantity"];
 	        this.received_at = this.convertValues(source["received_at"], null);
-	        this.received_by = source["received_by"];
 	        this.warehouse_id = source["warehouse_id"];
 	    }
 	
@@ -286,6 +284,24 @@ export namespace model {
 	        this.supplier_id = source["supplier_id"];
 	        this.name = source["name"];
 	        this.contact_info = source["contact_info"];
+	    }
+	}
+	export class User {
+	    user_id: number;
+	    username: string;
+	    full_name: string;
+	    role: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new User(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.user_id = source["user_id"];
+	        this.username = source["username"];
+	        this.full_name = source["full_name"];
+	        this.role = source["role"];
 	    }
 	}
 	export class Warehouse {

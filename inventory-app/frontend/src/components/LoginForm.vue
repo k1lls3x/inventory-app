@@ -62,7 +62,7 @@
 
 <script setup>
 import { ref } from 'vue'
-
+import { LoginUser } from '../../wailsjs/go/app/App'
 const login = ref('')
 const password = ref('')
 const error = ref('')
@@ -89,23 +89,21 @@ function validatePassword() {
   return true
 }
 
-function handleLogin() {
+async function handleLogin() {
   error.value = ''
   if (!validateLogin() | !validatePassword()) return
 
   loading.value = true
-  setTimeout(() => {
-    if (login.value === 'admin' && password.value === '1234') {
-      localStorage.setItem('loggedIn', 'true')
-      emit('login-success')
-    } else {
-      error.value = 'Неверный логин или пароль'
-      setTimeout(() => error.value = '', 1200)
-    }
-    loading.value = false
-  }, 700)
+  try {
+    const userData = await LoginUser(login.value, password.value)
+    emit('login-success', userData)   // <-- только это!
+    localStorage.setItem('loggedIn', 'true')
+  } catch (e) {
+    error.value = e?.message || 'Неверный логин или пароль'
+    setTimeout(() => error.value = '', 1200)
+  }
+  loading.value = false
 }
-
 function toggleShowPassword() {
   showPassword.value = !showPassword.value
 }

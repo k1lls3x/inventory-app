@@ -5,11 +5,13 @@ import (
 	"inventory-app/backend/internal/db"
 	"inventory-app/backend/internal/handler/dashboard"
 	"inventory-app/backend/internal/handler/export"
-"inventory-app/backend/logs"
+	"inventory-app/backend/logs"
 	"inventory-app/backend/internal/model"
 	"inventory-app/backend/internal/repository"
-"log"
-"os"
+	"log"
+	"os"
+	"inventory-app/backend/auth"
+	"errors"
 )
 
 // App struct
@@ -141,4 +143,22 @@ func (a *App)  EditInbound(inb model.Inbound) error{
 //-----------------------Supplier---------------------------------\\
 func (a *App)  GetSuppliers() ([]model.Supplier, error){
 	return repository.GetSuppliers()
+}
+//-----------------------Auth---------------------------------\\
+
+func (a *App) RegisterUser(username, password, fullName, role string) error {
+	user := &model.User{
+			Username: username,
+			Role:     role,
+			FullName: fullName,
+	}
+	return auth.Register(user, password)
+}
+
+func (a *App) LoginUser(username, password string) (*model.User, error) {
+	user, ok := auth.Authorize(username, password)
+	if !ok {
+			return nil, errors.New("Неверный логин или пароль")
+	}
+	return user, nil
 }

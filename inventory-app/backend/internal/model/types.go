@@ -4,7 +4,7 @@ import "time"
 type User struct {
 	UserID   int    `db:"user_id" json:"user_id"`
 	Username string `db:"username" json:"username"`
-	Password string `db:"password" json:"-"`
+	PasswordHash string `db:"password_hash" json:"-"`
 	FullName string `db:"full_name" json:"full_name"`
 	Role     string `db:"role" json:"role"`
 }
@@ -34,7 +34,7 @@ type Inbound struct {
 	SupplierID   int       `db:"supplier_id" json:"supplier_id"`
 	Quantity     int       `db:"quantity" json:"quantity"`
 	ReceivedAt   time.Time `db:"received_at" json:"received_at"`
-	ReceivedBy   int       `db:"received_by" json:"received_by"`
+//	ReceivedBy   int       `db:"received_by" json:"received_by"`
 	WarehouseID  int       `db:"warehouse_id" json:"warehouse_id"`
 }
 
@@ -43,7 +43,7 @@ type Outbound struct {
 	ItemID       int       `db:"item_id" json:"item_id"`
 	Quantity     int       `db:"quantity" json:"quantity"`
 	ShippedAt    time.Time `db:"shipped_at" json:"shipped_at"`
-	ShippedBy    int       `db:"shipped_by" json:"shipped_by"`
+//	ShippedBy    int       `db:"shipped_by" json:"shipped_by"`
 	Destination  *string   `db:"destination" json:"destination"`
 	WarehouseID  int       `db:"warehouse_id" json:"warehouse_id"`
 }

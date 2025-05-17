@@ -33,10 +33,10 @@ func GetInboundDetails()([]model.InboundDetails,error){
 
 func AddInbound (inb model.Inbound) error {
 		query:=`
-		INSERT INTO inbound (item_id, supplier_id, quantity, received_at, received_by, warehouse_id)
-					VALUES ($1, $2, $3, COALESCE($4, now()), $5, $6)
+			INSERT INTO inbound (item_id, supplier_id, quantity, received_at, warehouse_id)
+							VALUES ($1, $2, $3, COALESCE($4, now()), $5)
 		`
-		_, err := db.DB.Exec(query, inb.ItemID, inb.SupplierID, inb.Quantity, inb.ReceivedAt,inb.ReceivedBy, inb.WarehouseID)
+		_, err := db.DB.Exec(query, inb.ItemID, inb.SupplierID, inb.Quantity, inb.ReceivedAt, inb.WarehouseID)
 		if err != nil {
 			log.Println("❌ Произошла ошибка при добавлении поставок: ", err)
 		}

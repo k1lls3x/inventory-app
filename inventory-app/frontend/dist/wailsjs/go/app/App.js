@@ -86,6 +86,14 @@ export function GetWeeklyStockTrend() {
   return window['go']['app']['App']['GetWeeklyStockTrend']();
 }
 
+export function LoginUser(arg1, arg2) {
+  return window['go']['app']['App']['LoginUser'](arg1, arg2);
+}
+
+export function RegisterUser(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['RegisterUser'](arg1, arg2, arg3, arg4);
+}
+
 export function RemoveItem(arg1) {
   return window['go']['app']['App']['RemoveItem'](arg1);
 }

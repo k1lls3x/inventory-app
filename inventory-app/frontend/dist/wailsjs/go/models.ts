@@ -288,6 +288,24 @@ export namespace model {
 	        this.contact_info = source["contact_info"];
 	    }
 	}
+	export class User {
+	    user_id: number;
+	    username: string;
+	    full_name: string;
+	    role: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new User(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.user_id = source["user_id"];
+	        this.username = source["username"];
+	        this.full_name = source["full_name"];
+	        this.role = source["role"];
+	    }
+	}
 	export class Warehouse {
 	    warehouse_id: number;
 	    name: string;

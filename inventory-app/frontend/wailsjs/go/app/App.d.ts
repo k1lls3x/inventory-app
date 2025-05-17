@@ -45,6 +45,10 @@ export function GetWarehouses():Promise<Array<model.Warehouse>>;
 
 export function GetWeeklyStockTrend():Promise<Array<model.DailyStock>>;
 
+export function LoginUser(arg1:string,arg2:string):Promise<model.User>;
+
+export function RegisterUser(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
+
 export function RemoveItem(arg1:string):Promise<void>;
 
 export function RemoveStock(arg1:number):Promise<void>;

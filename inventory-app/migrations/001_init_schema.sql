@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS "User" (
     user_id     SERIAL PRIMARY KEY,
     username    VARCHAR(50) UNIQUE NOT NULL,
-    password    TEXT NOT NULL,
+    password_hash     TEXT NOT NULL,
     full_name   VARCHAR(100),
     role        VARCHAR(20) CHECK (role IN ('admin', 'manager', 'worker')) NOT NULL
 );
@@ -36,26 +36,26 @@ CREATE TABLE IF NOT EXISTS warehouse (
 );
 
 -- Поступления
+-- Поступления (inbound)
 CREATE TABLE IF NOT EXISTS inbound (
     inbound_id     SERIAL PRIMARY KEY,
     item_id        INTEGER REFERENCES item(item_id),
     supplier_id    INTEGER REFERENCES supplier(supplier_id),
     quantity       INTEGER NOT NULL,
     received_at    TIMESTAMP DEFAULT now(),
-    received_by    INTEGER REFERENCES "User"(user_id),
     warehouse_id   INTEGER REFERENCES warehouse(warehouse_id)
 );
 
--- Отгрузки
+-- Отгрузки (outbound)
 CREATE TABLE IF NOT EXISTS outbound (
     outbound_id    SERIAL PRIMARY KEY,
     item_id        INTEGER REFERENCES item(item_id),
     quantity       INTEGER NOT NULL,
     shipped_at     TIMESTAMP DEFAULT now(),
-    shipped_by     INTEGER REFERENCES "User"(user_id),
     destination    TEXT,
     warehouse_id   INTEGER REFERENCES warehouse(warehouse_id)
 );
+
 
 -- Остатки
 CREATE TABLE IF NOT EXISTS stock (

@@ -12,8 +12,7 @@
     </svg>
   </div>
   <div>
-    <div class="sidebar-user-name">{{ user.full_name || user.username }}</div>
-    <div class="sidebar-user-role">{{ roleName(user.role) }}</div>
+    <div class="sidebar-user-name">{{ user?.full_name || user?.username }}</div>    <div class="sidebar-user-role">{{ roleName(user.role) }}</div>
   </div>
 </div>
 
@@ -489,8 +488,10 @@ import {
 const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
 const emit = defineEmits(['login-success'])
 
-function onLoginSuccess() {
+function onLoginSuccess(userData) {
+  user.value = userData        // <-- вот здесь присваивай!
   loggedIn.value = true
+  localStorage.setItem('loggedIn', 'true')
 }
 function logout() {
   localStorage.removeItem('loggedIn')
@@ -509,13 +510,8 @@ function handleLogin() {
     loading.value = false
   }, 700)
 }
-const user = ref({
-  full_name: "Алексей Иванов",
-  username: "ivanov",
-  role: "manager"
-})
+const user = ref(null) // по умолчанию null
 // Подгружай реального пользователя с бэка после логина
-
 function roleName(role) {
   switch (role) {
     case 'admin': return 'Администратор'
@@ -1011,7 +1007,17 @@ function closeEditModal() {
   stockToEdit.value = null
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (loggedIn.value && !user.value) {
+    try {
+      const userData = await window.go.app.App.GetCurrentUser();
+      user.value = userData;
+    } catch (err) {
+      loggedIn.value = false;
+      localStorage.removeItem('loggedIn');
+      user.value = null;
+    }
+  }
   GetWeeklyStockTrend().then(data => weeklyStockData.value = data)
   GetAllItems().then(data => items.value = data)
   GetDashboard().then(data => {
