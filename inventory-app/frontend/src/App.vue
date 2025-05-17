@@ -1,4 +1,6 @@
 <template>
+    <LoginForm v-if="!loggedIn" @login-success="onLoginSuccess" />
+   <div v-else class="dashboard">
   <div class="dashboard">
     <header class="header">
       <h1>📊 Складская система</h1>
@@ -109,6 +111,8 @@
             <div class="filter-group button-group">
               <label>&nbsp;</label>
               <button class="add-button" @click="openAddModal">➕ Добавить остаток</button>
+              <button @click="logout">Выйти</button>
+
             </div>
           </div>
         </div>
@@ -194,7 +198,7 @@
           <div class="table-header">
     <p class="title">Остатки на складе</p>
     <button class="export-button" @click="exportToExcel">📤 Экспорт в Excel</button>
-  </div>
+    </div>
           <div class="chart-segment">
             <BarChart
               v-if="filteredChartData.datasets[0].data.length"
@@ -545,34 +549,8 @@
 </section>
     </main>
   </div>
+</div>
 </template>
-
-<script>
-export default {
-  methods: {
-    exportToExcel() {
-      window.go.app.App.ExportStockToExcel().then(base64data => {
-        const binary = atob(base64data);
-        const len = binary.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = "stock_report.xlsx";
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-      }).catch(err => {
-        alert("Ошибка экспорта: " + err);
-      });
-    }
-  }
-}
-</script>
-
-
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import BarChart from './components/BarChart.vue'
@@ -582,6 +560,7 @@ import { ChangeStock } from '../wailsjs/go/app/App'
 import { GetStockDetails } from '../wailsjs/go/app/App'
 import { RemoveStock } from '../wailsjs/go/app/App'
 import { ExportStockToExcel } from '../wailsjs/go/app/App'
+import LoginForm from './components/LoginForm.vue'
 
 import {
   GetDashboard,
@@ -599,7 +578,29 @@ import {
   EditInbound
 
 } from '../wailsjs/go/app/App'
+const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
+const emit = defineEmits(['login-success'])
 
+function onLoginSuccess() {
+  loggedIn.value = true
+}
+function logout() {
+  localStorage.removeItem('loggedIn')
+  loggedIn.value = false
+}
+function handleLogin() {
+  error.value = ''
+  loading.value = true
+  setTimeout(() => {
+    if (login.value === 'admin' && password.value === '1234') {
+      localStorage.setItem('loggedIn', 'true')
+      emit('login-success')
+    } else {
+      error.value = 'Неверный логин или пароль'
+    }
+    loading.value = false
+  }, 700)
+}
 const tabs = [
   'Дашборд',
   'Остатки',
@@ -635,7 +636,24 @@ const newInbound = ref({
   received_at: "",
 })
 const suppliers = ref([]) // список поставщиков
-
+function exportToExcel() {
+  window.go.app.App.ExportStockToExcel().then(base64data => {
+    const binary = atob(base64data);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "stock_report.xlsx";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }).catch(err => {
+    alert("Ошибка экспорта: " + err);
+  });
+}
 function openAddDeliveryModal() {
   showAddDeliveryModal.value = true
 }
