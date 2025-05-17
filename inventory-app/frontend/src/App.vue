@@ -4,7 +4,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
   <!-- User Block -->
-  <div class="sidebar-user">
+  <div class="sidebar-user" @click="showProfileModal = true" style="cursor:pointer;">
   <div class="sidebar-user-avatar">
     <svg width="40" height="40" fill="none" viewBox="0 0 40 40">
       <circle cx="20" cy="20" r="20" fill="#e3eaff"/>
@@ -12,7 +12,8 @@
     </svg>
   </div>
   <div>
-    <div class="sidebar-user-name">{{ user?.full_name || user?.username }}</div>    <div class="sidebar-user-role">{{ roleName(user.role) }}</div>
+    <div class="sidebar-user-name">{{ user?.full_name || user?.username }}</div>
+    <div class="sidebar-user-role">{{ roleName(user.role) }}</div>
   </div>
 </div>
 
@@ -20,13 +21,13 @@
     <!-- SVG или логотип -->
   </div>
   <nav>
-    <button
-      v-for="tab in tabs"
-      :key="tab"
-      :class="{ active: currentTab === tab }"
-      @click="currentTab = tab"
-    >{{ tab }}</button>
-  </nav>
+  <button
+    v-for="tab in tabs"
+    :key="tab"
+    :class="{ active: currentTab === tab }"
+    @click="currentTab = tab"
+  >{{ tab }}</button>
+</nav>
   <button class="logout-btn" @click="logout">🚪 Выйти</button>
 </aside>
 
@@ -96,7 +97,10 @@
             </div>
           </div>
         </section>
-
+ <!-- Пользователи (видно только админу) -->
+ <section v-if="currentTab === 'Пользователи' && user?.role === 'admin'">
+    <UserTable />
+  </section>
         <!-- Остатки -->
         <section v-else-if="currentTab === 'Остатки'">
           <div class="filters-bar">
@@ -455,6 +459,87 @@
         </section>
       </main>
     </div>
+   <!-- МОДАЛКА ПРОФИЛЯ - вставь в свой <template> -->
+    <div v-if="showProfileModal" class="modal-overlay" @click.self="showProfileModal = false">
+  <div class="modal profile-modal-modern">
+    <!-- Заголовок и аватар -->
+    <div class="profile-header-modern">
+      <div class="profile-avatar-modern accent-avatar">
+        <svg width="58" height="58" viewBox="0 0 58 58">
+          <defs>
+            <linearGradient id="avatar-gradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#a5b6fa"/>
+              <stop offset="100%" stop-color="#2563eb"/>
+            </linearGradient>
+          </defs>
+          <circle cx="29" cy="29" r="29" fill="url(#avatar-gradient)"/>
+          <path d="M29 36c-6 0-11 5-11 11h22c0-6-5-11-11-11Zm0-4a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z" fill="#f3f6fd"/>
+        </svg>
+      </div>
+      <div>
+        <div class="profile-title-modern main-name">{{ user.full_name }}</div>
+        <div class="profile-role-modern">{{ roleName(user.role) }}</div>
+      </div>
+    </div>
+
+    <!-- Блок с инфой -->
+    <div class="profile-info-modern-rich profile-info-compact">
+      <div class="info-row-rich">
+        <span class="info-icon-circle">
+          <svg width="18" height="18" fill="none" viewBox="0 0 18 18"><circle cx="9" cy="9" r="9" fill="#e3eaff"/><path d="M9 12c-2.2 0-4 1.1-4 2.1v.4h8v-.4C13 13.1 11.2 12 9 12zm0-1.1A2.1 2.1 0 1 0 9 6a2.1 2.1 0 0 0 0 4.2z" fill="#2563eb"/></svg>
+        </span>
+        <span class="info-label-rich">Логин</span>
+        <span class="info-value-rich">{{ user.username }}</span>
+      </div>
+      <div class="info-row-rich">
+        <span class="info-icon-circle">
+          <svg width="18" height="18" fill="none" viewBox="0 0 18 18"><rect width="18" height="18" rx="6" fill="#e3eaff"/><path d="M5.7 7.2h6.6v1.2H5.7v-1.2zm0 2h6.6v1.2H5.7v-1.2z" fill="#2563eb"/></svg>
+        </span>
+        <span class="info-label-rich">Роль</span>
+        <span class="info-value-rich">{{ roleName(user.role) }}</span>
+      </div>
+    </div>
+
+    <!-- Блок смены пароля -->
+    <div class="profile-info-modern-rich profile-password-compact">
+      <div class="profile-change-title-modern">Смена пароля</div>
+      <div class="profile-change-fields-modern profile-fields-spaced">
+        <input
+          type="password"
+          v-model="oldPassword"
+          placeholder="Старый пароль"
+          class="input-modern input-shadow"
+        />
+        <input
+          type="password"
+          v-model="newPassword"
+          placeholder="Новый пароль"
+          class="input-modern input-shadow"
+        />
+        <input
+          type="password"
+          v-model="repeatPassword"
+          placeholder="Повторите новый пароль"
+          class="input-modern input-shadow"
+        />
+      </div>
+      <transition name="fade">
+        <div v-if="profileError" class="error-msg-modern">{{ profileError }}</div>
+      </transition>
+      <transition name="fade">
+        <div v-if="profileSuccess" class="success-msg-modern">{{ profileSuccess }}</div>
+      </transition>
+    </div>
+
+    <!-- Кнопки в самом низу -->
+    <div class="profile-actions-modern buttons-bottom profile-actions-outside">
+      <button @click="changePassword" class="change-btn-modern main-btn-strong">Сменить пароль</button>
+      <button @click="showProfileModal = false" class="close-btn-modern main-btn-ghost">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+
   </div>
 </template>
 
@@ -482,7 +567,8 @@ import {
   AddInbound,
   GetSuppliers,
   DeleteInbound,
-  EditInbound
+  EditInbound,
+  ChangePassword
 
 } from '../wailsjs/go/app/App'
 const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
@@ -520,17 +606,67 @@ function roleName(role) {
     default: return 'Пользователь'
   }
 }
+const showProfileModal = ref(false)
+const oldPassword = ref('')
+const newPassword = ref('')
+const repeatPassword = ref('')
+const profileError = ref('')
+const profileSuccess = ref('')
+const tabs = computed(() => {
+  if (!user.value) return [];
+  if (user.value.role === 'admin') {
+    return [
+      'Дашборд',
+      'Остатки',
+      'Поставки',
+      'Товары',
+      'Склады',
+      'Поставщики',
+      'Движения',
+      'Пользователи' // Только для админа!
+    ];
+  }
+  // Для менеджера
+  if (user.value.role === 'manager') {
+    return [
+      'Дашборд',
+      'Остатки',
+      'Поставки',
+      'Товары',
+      'Склады',
+      'Поставщики',
+      'Движения'
+    ];
+  }
+  // Для сотрудника
+  return [
+    'Дашборд',
+    'Остатки',
+    'Поставки',
+    'Движения'
+  ];
+});
 
-const tabs = [
-  'Дашборд',
-  'Остатки',
-  'Поставки',
-  'Товары',
-  'Склады',
-  'Поставщики',
-  'Движения'
-]
-
+async function changePassword() {
+  profileError.value = ''
+  profileSuccess.value = ''
+  if (!oldPassword.value || !newPassword.value || !repeatPassword.value) {
+    profileError.value = 'Заполните все поля'
+    return
+  }
+  if (newPassword.value !== repeatPassword.value) {
+    profileError.value = 'Пароли не совпадают'
+    return
+  }
+  try {
+    // используем username (логин)
+    await window.go.app.App.ChangePassword(user.value.username, oldPassword.value, newPassword.value)
+    profileSuccess.value = 'Пароль успешно изменён'
+    oldPassword.value = newPassword.value = repeatPassword.value = ''
+  } catch (e) {
+    profileError.value = e?.message || 'Ошибка смены пароля'
+  }
+}
 const showEditDeliveryModal = ref(false)
 const deliveryToEdit = ref(null)
 const showEditModal = ref(false)
@@ -1104,5 +1240,421 @@ const filteredStockList = computed(() =>
 </script>
 
 <style scoped>
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(55, 65, 81, 0.23);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-modal-modern {
+  min-height: 545px;
+  width: 410px;
+  max-width: 94vw;
+  background: #f9fbff;
+  border-radius: 20px;
+  box-shadow: 0 10px 48px 0 #20223622;
+  padding: 2.7rem 2.2rem 2rem 2.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+  animation: modalPopIn .23s cubic-bezier(.44,1.6,.41,.98);
+  position: relative;
+}
+
+@keyframes modalPopIn {
+  0% { transform: scale(0.96) translateY(20px); opacity: 0;}
+  100% { transform: scale(1) translateY(0); opacity: 1;}
+}
+
+.profile-header-modern {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+.profile-avatar-modern {
+  width: 58px;
+  height: 58px;
+  background: linear-gradient(120deg, #e3eaff 70%, #f3f8ff 100%);
+  border-radius: 50%;
+  box-shadow: 0 3px 18px #e2eaff51;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-title-modern {
+  font-size: 1.28rem;
+  font-weight: 900;
+  color: #212942;
+}
+.profile-role-modern {
+  color: #2563eb;
+  font-size: 1.09rem;
+  font-weight: 700;
+  opacity: .89;
+  margin-top: .08rem;
+}
+
+.profile-info-modern {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem 1.1rem 1.25rem;
+  margin-bottom: .55rem;
+  margin-top: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.03rem;
+  font-size: 1.05rem;
+  box-shadow: 0 2.5px 14px #e3eaff19;
+}
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  line-height: 1.45;
+}
+.info-label {
+  color: #7082a4;
+  font-weight: 700;
+  font-size: 1.04rem;
+  min-width: 85px;
+  display: flex;
+  align-items: center;
+  letter-spacing: .01em;
+}
+.info-value {
+  color: #1a2544;
+  font-weight: 800;
+  font-size: 1.08rem;
+  letter-spacing: .02em;
+}
+
+.profile-divider {
+  height: 1px;
+  background: linear-gradient(90deg, #d4e0f6 10%, #fff 80%);
+  border: none;
+  margin: .55rem 0 .35rem 0;
+}
+
+.profile-change-title-modern {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #293052;
+  margin-top: .5rem;
+  margin-bottom: .16rem;
+}
+
+.profile-change-fields-modern {
+  display: flex;
+  flex-direction: column;
+  margin-top: .3rem;
+  margin-bottom: .35rem;
+  gap: .69rem;
+}
+.input-modern {
+  font-size: 1.08rem;
+  border-radius: 8px;
+  border: 1.1px solid #dde8f7;
+  padding: 0.48rem 1.08rem;
+  background: #f5f7fb;
+  transition: border .13s, box-shadow .13s;
+}
+.input-modern:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+  outline: none;
+}
+
+.profile-actions-modern {
+  display: flex;
+  gap: .7rem;
+  justify-content: flex-end;
+  margin-top: .08rem;
+}
+
+.change-btn-modern {
+  background: linear-gradient(93deg, #2563eb 80%, #60a5fa 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.52rem 1.7rem;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.13s, transform 0.11s;
+  letter-spacing: .01em;
+  box-shadow: 0 1.5px 8px #4f8cff11;
+}
+.change-btn-modern:hover {
+  background: linear-gradient(93deg, #1749d4 85%, #2563eb 100%);
+  transform: scale(1.035);
+}
+
+.close-btn-modern {
+  background: #f4f5fa;
+  color: #1a2544;
+  border: none;
+  border-radius: 8px;
+  padding: 0.52rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: background .14s, color .12s;
+}
+.close-btn-modern:hover {
+  background: #e6edff;
+  color: #1c2241;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.18s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.error-msg-modern, .success-msg-modern {
+  font-size: 1.06rem;
+  text-align: center;
+  font-weight: 700;
+  margin-top: 0.18rem;
+  letter-spacing: .01em;
+}
+.error-msg-modern { color: #e11d48; }
+.success-msg-modern { color: #22c55e; }
+
+@media (max-width: 520px) {
+  .profile-modal-modern {
+    width: 99vw;
+    padding: 1.2rem .2rem 1rem .2rem;
+    min-height: unset;
+    border-radius: 11px;
+  }
+  .profile-info-modern {
+    padding: 0.7rem 0.7rem 0.7rem 0.7rem;
+  }
+  .profile-header-modern {
+    gap: .6rem;
+  }
+}
+.profile-info-modern-rich {
+  background: rgba(248, 252, 255, 0.96);
+  border-radius: 16px;
+  border: 1.6px solid #e3eaff;
+  box-shadow: 0 4px 24px #dde8f74d;
+  padding: 1.12rem 1.25rem 1.12rem 1.25rem;
+  margin-bottom: 1.15rem;
+  margin-top: 0.28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.09rem;
+  font-size: 1.11rem;
+  position: relative;
+  backdrop-filter: blur(3.5px);
+  transition: box-shadow 0.22s;
+}
+
+.profile-info-modern-rich:hover {
+  box-shadow: 0 8px 32px #b7c5ec2e, 0 2px 10px #2563eb11;
+  border-color: #b7c5ec;
+}
+
+.info-row-rich {
+  display: flex;
+  align-items: center;
+  gap: 0.74rem;
+  line-height: 1.42;
+}
+
+.info-icon-circle {
+  background: linear-gradient(120deg, #e3eaff 55%, #f3f8ff 100%);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  box-shadow: 0 1.5px 6px #2563eb0f;
+}
+
+.info-label-rich {
+  color: #6c81a8;
+  font-size: 1.03rem;
+  font-weight: 700;
+  min-width: 54px;
+  margin-right: 0.2em;
+  letter-spacing: 0.01em;
+}
+
+.info-value-rich {
+  color: #203050;
+  font-weight: 900;
+  font-size: 1.14rem;
+  margin-left: 0.2em;
+  letter-spacing: .01em;
+}
+.profile-change-fields-modern {
+  display: flex;
+  flex-direction: column;
+  margin-top: .22rem;
+  margin-bottom: .15rem;
+  gap: .32rem;               /* стало компактнее */
+}
+
+.input-modern {
+  font-size: 1.08rem;
+  border-radius: 10px;
+  border: 1.2px solid #e3eaff;
+  padding: 0.64rem 1.15rem;  /* стало чуть компактнее */
+  background: linear-gradient(120deg, #f9fbff 70%, #ecf3fa 100%);
+  box-shadow: 0 1.5px 8px #d9eaff10;
+  margin: 0;
+  transition: border .15s, box-shadow .18s, background .18s;
+  outline: none;
+}
+
+.input-modern:focus {
+  border: 1.4px solid #2563eb;
+  background: #f0f6ff;
+  box-shadow: 0 2px 12px #2563eb18;
+}
+
+.input-modern::placeholder {
+  color: #92a3c5;
+  font-weight: 600;
+  opacity: 1;
+  letter-spacing: 0.01em;
+  font-size: 1.03rem;
+}
+.accent-avatar {
+  background: linear-gradient(120deg, #a5b6fa 75%, #2563eb 100%);
+  box-shadow: 0 2.5px 16px #2563eb26, 0 2.5px 10px #2563eb18;
+}
+
+.user-details-compact {
+  gap: .58rem;
+  padding: 0.7rem 1.05rem 0.85rem 1.05rem;
+  border-width: 1.8px;
+}
+
+.main-name {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.input-shadow {
+  box-shadow: 0 2px 12px #b7c5ec0d;
+  border-radius: 10px;
+}
+
+.input-modern {
+  font-size: 1.03rem;
+  padding: 0.53rem 1.05rem;
+}
+
+.profile-change-fields-modern {
+  gap: .38rem;
+}
+
+.main-btn-strong {
+  background: linear-gradient(95deg, #2563eb 70%, #4785ff 100%);
+  box-shadow: 0 3px 16px #2563eb18;
+  font-weight: 900;
+  font-size: 1.04rem;
+}
+
+.main-btn-strong:hover {
+  background: linear-gradient(93deg, #1749d4 85%, #2563eb 100%);
+  transform: scale(1.038);
+}
+
+.main-btn-ghost {
+  border: 1.6px solid #d7e4fa;
+  background: #f4f8fd;
+  color: #28385e;
+  font-weight: 700;
+  transition: background .15s, color .13s;
+}
+
+.main-btn-ghost:hover {
+  background: #e9f0ff;
+  color: #133179;
+  border-color: #b7c5ec;
+}
+
+/* Слегка уменьшить расстояния */
+.profile-modal-modern {
+  gap: 1.1rem;
+  padding-top: 2.0rem;
+  padding-bottom: 1.4rem;
+}
+
+@media (max-width: 520px) {
+  .profile-modal-modern { padding: 0.7rem 0.07rem 0.8rem 0.07rem; }
+}
+.profile-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Общий стиль карточки для обоих блоков */
+.profile-info-modern-rich {
+  background: #fff;
+  border-radius: 14px;
+  border: 1.5px solid #e3eaff;
+  box-shadow: 0 4px 24px #dde8f74d;
+  padding: 1.08rem 1.3rem 1.08rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.08rem;
+}
+
+/* Дополнительная компактность для информации */
+.profile-info-compact {
+  gap: .63rem;
+  padding-bottom: .73rem;
+}
+
+.profile-password-compact {
+  margin-top: 0; /* сбросить лишний отступ */
+  gap: 0.8rem;
+  padding-top: 1rem;
+}
+
+/* Группа кнопок ниже! */
+.profile-actions-modern.buttons-bottom {
+  margin-top: 1.2rem;
+  justify-content: flex-end;
+}
+
+/* Уменьшаем контраст разделителя */
+.profile-divider {
+  display: none;
+}
+.profile-change-fields-modern.profile-fields-spaced {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;   /* Увеличенный отступ между инпутами */
+}
+
+.profile-actions-modern.profile-actions-outside {
+  margin-top: 2.2rem;
+  justify-content: flex-end;
+  gap: 1.1rem;
+  display: flex;
+  /* можно добавить паддинг вниз, если нужно */
+}
+
+/* Для мобильных — чтобы не улетало за пределы */
+@media (max-width: 520px) {
+  .profile-actions-modern.profile-actions-outside {
+    margin-top: 1.4rem;
+  }
+}
 
 </style>

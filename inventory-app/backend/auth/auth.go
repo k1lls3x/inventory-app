@@ -5,6 +5,7 @@ import (
 	"inventory-app/backend/internal/model"
 	"log"
 	"golang.org/x/crypto/bcrypt"
+	"fmt"
 )
 
 func HashPassword(password string) (string, error) {
@@ -16,6 +17,29 @@ func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
+
+func ChangePassword(login, oldPassword, newPassword string) error {
+	user, err := GetUserByUsername(login)
+	if err != nil {
+		return err
+	}
+
+	if !CheckPasswordHash(oldPassword, user.PasswordHash) {
+			return fmt.Errorf("старый пароль неверный")
+	}
+
+	newPasswordHash, err := HashPassword(newPassword)
+	query := `
+		UPDATE "User" SET password = $1 WHERE username = $2
+	`
+	_, err = db.DB.Exec(query, newPasswordHash, login)
+	if err != nil {
+		log.Println("❌ Произошла ошибка при смене пароля: ", err)
+		return err
+	}
+	return nil
+}
+
 
 func GetUserByUsername(username string) (*model.User, error) {
 	var user model.User

@@ -14,6 +14,10 @@ export function AddStock(arg1, arg2, arg3) {
   return window['go']['app']['App']['AddStock'](arg1, arg2, arg3);
 }
 
+export function ChangePassword(arg1, arg2, arg3) {
+  return window['go']['app']['App']['ChangePassword'](arg1, arg2, arg3);
+}
+
 export function ChangeStock(arg1, arg2, arg3) {
   return window['go']['app']['App']['ChangeStock'](arg1, arg2, arg3);
 }

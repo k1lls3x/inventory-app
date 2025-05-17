@@ -44,7 +44,6 @@ export namespace model {
 	    quantity: number;
 	    // Go type: time
 	    received_at: any;
-	    received_by: number;
 	    warehouse_id: number;
 	
 	    static createFrom(source: any = {}) {
@@ -58,7 +57,6 @@ export namespace model {
 	        this.supplier_id = source["supplier_id"];
 	        this.quantity = source["quantity"];
 	        this.received_at = this.convertValues(source["received_at"], null);
-	        this.received_by = source["received_by"];
 	        this.warehouse_id = source["warehouse_id"];
 	    }
 	

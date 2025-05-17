@@ -162,3 +162,6 @@ func (a *App) LoginUser(username, password string) (*model.User, error) {
 	}
 	return user, nil
 }
+func (a *App) ChangePassword(login, oldPassword, newPassword string) error{
+	return auth.ChangePassword(login,oldPassword,newPassword)
+}

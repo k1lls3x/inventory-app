@@ -9,6 +9,8 @@ export function AddItem(arg1:model.Item):Promise<void>;
 
 export function AddStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
+export function ChangePassword(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function ChangeStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
 export function DeleteInbound(arg1:number):Promise<void>;
