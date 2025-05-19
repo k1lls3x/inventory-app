@@ -398,19 +398,17 @@
               <p class="value">{{ items.length }}</p>
             </div>
             <div class="card animate-card">
-              <p class="title">Категорий</p>
-              <p class="value">{{ categories.length }}</p>
-            </div>
-            <div class="card animate-card">
-              <p class="title">Наименьший остаток</p>
-              <p class="value" :class="{'note': true, 'positive': minStock > 10, 'negative': minStock <= 10}">
-                {{ minStock }}
-              </p>
-            </div>
-            <div class="card animate-card">
-              <p class="title">Наибольший остаток</p>
-              <p class="value">{{ maxStock }}</p>
-            </div>
+          <p class="title">Наименьший остаток</p>
+          <p class="value" :class="{'note': true, 'negative': minActualStock <= 0}">
+            {{ minActualStock }}
+          </p>
+        </div>
+        <div class="card animate-card">
+          <p class="title">Наибольший остаток</p>
+          <p class="value">
+            {{ maxActualStock }}
+          </p>
+        </div>
           </div>
           <div class="table-section animate-table">
             <div class="table-header">
@@ -430,27 +428,64 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in filteredItems" :key="item.item_id">
-                  <td>{{ item.name }}</td>
-                  <td>{{ item.sku }}</td>
-                  <td>{{ item.category }}</td>
-                  <td>{{ item.unit }}</td>
-                  <td>{{ item.min_stock }}</td>
-                  <td>{{ item.description }}</td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="action-btn edit" @click="openEditItemModal(item)">✏️</button>
-                      <button class="action-btn delete" @click="deleteItem(item)">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
+  <tr v-for="item in filteredItems" :key="item.item_id">
+    <td>{{ item.name }}</td>
+    <td>{{ item.sku }}</td>
+    <td>{{ item.category }}</td>
+    <td>{{ item.uom }}</td>
+    <td>{{ item.reorder_level }}</td>
+    <td>{{ item.description }}</td>
+    <td>
+      <div class="action-buttons">
+        <button class="action-btn edit" @click="openEditItemModal(item)">✏️</button>
+        <button class="action-btn delete" @click="deleteItem(item)">🗑️</button>
+      </div>
+    </td>
+  </tr>
+</tbody>
+
             </table>
             <div v-if="filteredItems.length === 0" class="empty-message">
               Нет товаров по фильтру
             </div>
           </div>
-          <!-- Тут могут быть модалки для добавления/редактирования товара по аналогии -->
+          <div v-if="showAddItemModal" class="modal-overlay" @click.self="showAddItemModal = false">
+  <div class="modal">
+    <h3>Добавить товар</h3>
+    <div class="form-group"><label>SKU</label><input v-model="newItem.sku" /></div>
+    <div class="form-group"><label>Наименование</label><input v-model="newItem.name" /></div>
+    <div class="form-group"><label>Описание</label><input v-model="newItem.description" /></div>
+    <div class="form-group"><label>Категория</label><input v-model="newItem.category" /></div>
+    <div class="form-group"><label>Ед. изм.</label><input v-model="newItem.uom" /></div>
+    <div class="form-group"><label>Мин. остаток</label><input type="number" v-model.number="newItem.reorder_level" /></div>
+    <div class="form-group"><label>Партия для дозакупки</label><input type="number" v-model.number="newItem.reorder_qty" /></div>
+    <div class="form-group"><label>Цена</label><input type="number" v-model.number="newItem.price" /></div>
+    <div class="form-group"><label>Себестоимость</label><input type="number" v-model.number="newItem.cost" /></div>
+    <div class="modal-actions">
+      <button @click="confirmAddItem">💾 Сохранить</button>
+      <button @click="showAddItemModal = false">❌ Отмена</button>
+    </div>
+  </div>
+</div>
+<div v-if="showEditItemModal" class="modal-overlay" @click.self="showEditItemModal = false">
+  <div class="modal">
+    <h3>Редактировать товар</h3>
+    <div class="form-group"><label>SKU</label><input v-model="itemToEdit.sku" disabled /></div>
+    <div class="form-group"><label>Наименование</label><input v-model="itemToEdit.name" /></div>
+    <div class="form-group"><label>Описание</label><input v-model="itemToEdit.description" /></div>
+    <div class="form-group"><label>Категория</label><input v-model="itemToEdit.category" /></div>
+    <div class="form-group"><label>Ед. изм.</label><input v-model="itemToEdit.uom" /></div>
+    <div class="form-group"><label>Мин. остаток</label><input type="number" v-model.number="itemToEdit.reorder_level" /></div>
+    <div class="form-group"><label>Партия для дозакупки</label><input type="number" v-model.number="itemToEdit.reorder_qty" /></div>
+    <div class="form-group"><label>Цена</label><input type="number" v-model.number="itemToEdit.price" /></div>
+    <div class="form-group"><label>Себестоимость</label><input type="number" v-model.number="itemToEdit.cost" /></div>
+    <div class="modal-actions">
+      <button @click="confirmEditItem">💾 Сохранить</button>
+      <button @click="showEditItemModal = false">❌ Отмена</button>
+    </div>
+  </div>
+</div>
+
         </section>
 
         <!-- Другое (заглушка) -->
@@ -568,7 +603,11 @@ import {
   GetSuppliers,
   DeleteInbound,
   EditInbound,
-  ChangePassword
+  ChangePassword,
+  GetItems,
+  AddItem,
+  UpdateItem,
+  RemoveItem
 
 } from '../wailsjs/go/app/App'
 const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
@@ -1074,17 +1113,24 @@ const maxStock = computed(() => {
 });
 
 // Заглушки методов
-function openAddItemModal() {
-  alert('Открыть модалку добавления товара (реализуй сам)');
-}
-function openEditItemModal(item) {
-  alert('Открыть модалку редактирования товара: ' + item.name);
-}
-function deleteItem(item) {
-  if (confirm(`Удалить "${item.name}"?`)) {
-    items.value = items.value.filter(i => i.item_id !== item.item_id);
+const minActualStock = computed(() => {
+  if (!totalStockPerItem.value.length) return 0
+  return Math.min(...totalStockPerItem.value)
+})
+const maxActualStock = computed(() => {
+  if (!totalStockPerItem.value.length) return 0
+  return Math.max(...totalStockPerItem.value)
+})
+
+
+const totalStockPerItem = computed(() => {
+  const map = {}
+  for (const s of stockList.value) {
+    map[s.item_id] = (map[s.item_id] || 0) + s.quantity
   }
-}
+  return Object.values(map)
+})
+
 function exportItemsToExcel() {
   alert('Заглушка экспорта товаров в Excel');
 }
@@ -1137,6 +1183,79 @@ function confirmAddStock() {
     console.error(err)
   })
 }
+const showAddItemModal = ref(false)
+const showEditItemModal = ref(false)
+const itemToEdit = ref(null)
+
+const newItem = ref({
+  sku: "",
+  name: "",
+  description: "",
+  uom: "",
+  reorder_level: 0,
+  reorder_qty: 0,
+  price: 0,
+  cost: 0,
+  category: ""
+})
+function openAddItemModal() {
+  Object.assign(newItem.value, {
+    sku: "",
+    name: "",
+    description: "",
+    uom: "",
+    reorder_level: 0,
+    reorder_qty: 0,
+    price: 0,
+    cost: 0,
+    category: ""
+  })
+  showAddItemModal.value = true
+}
+
+function openEditItemModal(item) {
+  itemToEdit.value = { ...item }
+  showEditItemModal.value = true
+}
+async function confirmAddItem() {
+  // простая валидация
+  if (!newItem.value.sku || !newItem.value.name) {
+    alert("Заполните все обязательные поля (артикул и наименование)");
+    return;
+  }
+  try {
+    await AddItem(newItem.value)
+    showAddItemModal.value = false
+    // обнови список
+    items.value = await GetItems() || []
+  } catch (e) {
+    alert('Ошибка при добавлении: ' + (e?.message || ''))
+  }
+}
+
+async function confirmEditItem() {
+  if (!itemToEdit.value.sku || !itemToEdit.value.name) {
+    alert("Заполните обязательные поля");
+    return;
+  }
+  try {
+    await UpdateItem(itemToEdit.value)
+    showEditItemModal.value = false
+    items.value = await GetItems() || []
+  } catch (e) {
+    alert('Ошибка при обновлении: ' + (e?.message || ''))
+  }
+}
+
+async function deleteItem(item) {
+  if (!confirm(`Удалить товар "${item.name}"?`)) return
+  try {
+    await RemoveItem(item.sku)
+    items.value = await GetItems() || []
+  } catch (e) {
+    alert('Ошибка при удалении: ' + (e?.message || ''))
+  }
+}
 
 function closeEditModal() {
   showEditModal.value = false
@@ -1154,6 +1273,7 @@ onMounted(async () => {
       user.value = null;
     }
   }
+  GetItems().then(data => items.value = data || []);
   GetWeeklyStockTrend().then(data => weeklyStockData.value = data)
   GetAllItems().then(data => items.value = data)
   GetDashboard().then(data => {

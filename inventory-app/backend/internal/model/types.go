@@ -1,6 +1,6 @@
 package model
 import "time"
-
+import "database/sql"
 type User struct {
 	UserID   int    `db:"user_id" json:"user_id"`
 	Username string `db:"username" json:"username"`
@@ -17,8 +17,8 @@ type Item struct {
 	UOM          string  `db:"uom" json:"uom"`
 	ReorderLevel int     `db:"reorder_level" json:"reorder_level"`
 	ReorderQty   int     `db:"reorder_qty" json:"reorder_qty"`
-	Price        float64 `db:"price" json:"price"`
-	Cost         float64 `db:"cost" json:"cost"`
+  Price sql.NullFloat64 `db:"price"`
+  Cost  sql.NullFloat64 `db:"cost"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
 

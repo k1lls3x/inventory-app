@@ -110,8 +110,8 @@ export namespace model {
 	    uom: string;
 	    reorder_level: number;
 	    reorder_qty: number;
-	    price: number;
-	    cost: number;
+	    Price: sql.NullFloat64;
+	    Cost: sql.NullFloat64;
 	    // Go type: time
 	    created_at: any;
 	
@@ -128,8 +128,8 @@ export namespace model {
 	        this.uom = source["uom"];
 	        this.reorder_level = source["reorder_level"];
 	        this.reorder_qty = source["reorder_qty"];
-	        this.price = source["price"];
-	        this.cost = source["cost"];
+	        this.Price = this.convertValues(source["Price"], sql.NullFloat64);
+	        this.Cost = this.convertValues(source["Cost"], sql.NullFloat64);
 	        this.created_at = this.convertValues(source["created_at"], null);
 	    }
 	
@@ -318,6 +318,25 @@ export namespace model {
 	        this.warehouse_id = source["warehouse_id"];
 	        this.name = source["name"];
 	        this.location = source["location"];
+	    }
+	}
+
+}
+
+export namespace sql {
+	
+	export class NullFloat64 {
+	    Float64: number;
+	    Valid: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new NullFloat64(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Float64 = source["Float64"];
+	        this.Valid = source["Valid"];
 	    }
 	}
 
