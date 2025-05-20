@@ -371,80 +371,75 @@
               </div>
             </div>
           </div>
+          <div>{{ items.length }}</div>
         </section>
 
         <!-- Товары -->
         <section v-else-if="currentTab === 'Товары'">
           <div class="filters-bar">
-            <div class="filter-group">
-              <label>🔍 Поиск</label>
-              <input type="text" class="input" v-model="itemSearch" placeholder="Название, SKU или категория" />
-            </div>
-            <div class="filter-group">
-              <label>Категория</label>
-              <select v-model="selectedCategory" class="input">
-                <option value="">Все категории</option>
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-              </select>
-            </div>
-            <div class="filter-group button-group">
-              <label>&nbsp;</label>
-              <button class="add-button" @click="openAddItemModal">➕ Добавить товар</button>
-            </div>
-          </div>
-          <div class="cards">
-            <div class="card animate-card">
-              <p class="title">Всего товаров</p>
-              <p class="value">{{ items.length }}</p>
-            </div>
-            <div class="card animate-card">
-          <p class="title">Наименьший остаток</p>
-          <p class="value" :class="{'note': true, 'negative': minActualStock <= 0}">
-            {{ minActualStock }}
-          </p>
+        <div class="filter-group">
+          <label>🔍 Поиск</label>
+          <input type="text" class="input" v-model="itemSearch" placeholder="Название или SKU" />
         </div>
-        <div class="card animate-card">
-          <p class="title">Наибольший остаток</p>
-          <p class="value">
-            {{ maxActualStock }}
-          </p>
+        <div class="filter-group button-group">
+          <label>&nbsp;</label>
+          <button class="add-button" @click="openAddItemModal">➕ Добавить товар</button>
         </div>
+      </div>
+      <div class="cards">
+          <div class="card animate-card">
+            <p class="title">Всего товаров</p>
+            <p class="value">{{ items.length }}</p>
           </div>
+          <div class="card animate-card">
+            <p class="title">Средняя цена товара</p>
+            <p class="value">{{ averagePrice }}</p>
+          </div>
+          <div class="card animate-card">
+            <p class="title">Наибольший остаток</p>
+            <p class="value">
+              {{ maxActualStock }}
+            </p>
+          </div>
+        </div>
+
           <div class="table-section animate-table">
             <div class="table-header">
               <p class="title">Товары</p>
               <button class="export-button" @click="exportItemsToExcel">📤 Экспорт в Excel</button>
             </div>
             <table>
-              <thead>
-                <tr>
-                  <th>Наименование</th>
-                  <th>SKU</th>
-                  <th>Категория</th>
-                  <th>Ед. изм.</th>
-                  <th>Мин. остаток</th>
-                  <th>Описание</th>
-                  <th>Действия</th>
-                </tr>
-              </thead>
-              <tbody>
-  <tr v-for="item in filteredItems" :key="item.item_id">
-    <td>{{ item.name }}</td>
-    <td>{{ item.sku }}</td>
-    <td>{{ item.category }}</td>
-    <td>{{ item.uom }}</td>
-    <td>{{ item.reorder_level }}</td>
-    <td>{{ item.description }}</td>
-    <td>
-      <div class="action-buttons">
-        <button class="action-btn edit" @click="openEditItemModal(item)">✏️</button>
-        <button class="action-btn delete" @click="deleteItem(item)">🗑️</button>
-      </div>
-    </td>
-  </tr>
-</tbody>
+                  <thead>
+                    <tr>
+                      <th>Наименование</th>
+                      <th>SKU</th>
+                      <th>Ед. изм.</th>
+                      <th>Описание</th>
+                      <th>Цена</th>
+                      <th>Себестоимость</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in filteredItems" :key="item.item_id">
+                      <td>{{ item.name }}</td>
+                      <td>{{ item.sku }}</td>
+                      <td>{{ item.uom }}</td>
+                      <td>{{ item.description }}</td>
+                      <td>
+                        {{ item.price != null ? Number(item.price).toLocaleString('ru-RU', { minimumFractionDigits: 2 }) : '—' }}
+                      </td>
+                      <td>{{ item.cost }}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="action-btn edit" @click="openEditItemModal(item)">✏️</button>
+                          <button class="action-btn delete" @click="deleteItem(item)">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
 
-            </table>
             <div v-if="filteredItems.length === 0" class="empty-message">
               Нет товаров по фильтру
             </div>
@@ -453,14 +448,12 @@
   <div class="modal">
     <h3>Добавить товар</h3>
     <div class="form-group"><label>SKU</label><input v-model="newItem.sku" /></div>
-    <div class="form-group"><label>Наименование</label><input v-model="newItem.name" /></div>
-    <div class="form-group"><label>Описание</label><input v-model="newItem.description" /></div>
-    <div class="form-group"><label>Категория</label><input v-model="newItem.category" /></div>
-    <div class="form-group"><label>Ед. изм.</label><input v-model="newItem.uom" /></div>
-    <div class="form-group"><label>Мин. остаток</label><input type="number" v-model.number="newItem.reorder_level" /></div>
-    <div class="form-group"><label>Партия для дозакупки</label><input type="number" v-model.number="newItem.reorder_qty" /></div>
-    <div class="form-group"><label>Цена</label><input type="number" v-model.number="newItem.price" /></div>
-    <div class="form-group"><label>Себестоимость</label><input type="number" v-model.number="newItem.cost" /></div>
+<div class="form-group"><label>Наименование</label><input v-model="newItem.name" /></div>
+<div class="form-group"><label>Описание</label><input v-model="newItem.description" /></div>
+<div class="form-group"><label>Ед. изм.</label><input v-model="newItem.uom" /></div>
+<div class="form-group"><label>Цена</label><input type="number" v-model.number="newItem.price" /></div>
+<div class="form-group"><label>Себестоимость</label><input type="number" v-model.number="newItem.cost" /></div>
+
     <div class="modal-actions">
       <button @click="confirmAddItem">💾 Сохранить</button>
       <button @click="showAddItemModal = false">❌ Отмена</button>
@@ -468,23 +461,141 @@
   </div>
 </div>
 <div v-if="showEditItemModal" class="modal-overlay" @click.self="showEditItemModal = false">
-  <div class="modal">
+  <div class="modal item-edit-modal">
     <h3>Редактировать товар</h3>
-    <div class="form-group"><label>SKU</label><input v-model="itemToEdit.sku" disabled /></div>
-    <div class="form-group"><label>Наименование</label><input v-model="itemToEdit.name" /></div>
-    <div class="form-group"><label>Описание</label><input v-model="itemToEdit.description" /></div>
-    <div class="form-group"><label>Категория</label><input v-model="itemToEdit.category" /></div>
-    <div class="form-group"><label>Ед. изм.</label><input v-model="itemToEdit.uom" /></div>
-    <div class="form-group"><label>Мин. остаток</label><input type="number" v-model.number="itemToEdit.reorder_level" /></div>
-    <div class="form-group"><label>Партия для дозакупки</label><input type="number" v-model.number="itemToEdit.reorder_qty" /></div>
-    <div class="form-group"><label>Цена</label><input type="number" v-model.number="itemToEdit.price" /></div>
-    <div class="form-group"><label>Себестоимость</label><input type="number" v-model.number="itemToEdit.cost" /></div>
-    <div class="modal-actions">
-      <button @click="confirmEditItem">💾 Сохранить</button>
-      <button @click="showEditItemModal = false">❌ Отмена</button>
-    </div>
+    <form @submit.prevent="confirmEditItem" autocomplete="off">
+      <div class="form-group"><label>SKU</label>
+        <input v-model="itemToEdit.sku" disabled class="input-modern" />
+      </div>
+      <div class="form-group"><label>Наименование</label>
+        <input v-model="itemToEdit.name" class="input-modern" />
+      </div>
+      <div class="form-group"><label>Описание</label>
+        <textarea v-model="itemToEdit.description" rows="2" class="input-modern" style="resize:vertical; min-height:36px;" />
+      </div>
+      <div class="form-row">
+        <div class="form-group half"><label>Категория</label>
+          <input v-model="itemToEdit.category" class="input-modern" />
+        </div>
+        <div class="form-group half"><label>Ед. изм.</label>
+          <input v-model="itemToEdit.uom" class="input-modern" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group half"><label>Мин. остаток</label>
+          <input type="number" v-model.number="itemToEdit.reorder_level" min="0" class="input-modern" />
+        </div>
+        <div class="form-group half"><label>Партия для дозакупки</label>
+          <input type="number" v-model.number="itemToEdit.reorder_qty" min="0" class="input-modern" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group half"><label>Цена</label>
+          <input type="number" v-model.number="itemToEdit.price" min="0" step="0.01" class="input-modern" />
+        </div>
+        <div class="form-group half"><label>Себестоимость</label>
+          <input type="number" v-model.number="itemToEdit.cost" min="0" step="0.01" class="input-modern" />
+        </div>
+      </div>
+      <div class="modal-actions modal-actions-row">
+        <button type="submit" class="main-btn-strong">💾 Сохранить</button>
+        <button type="button" class="main-btn-ghost" @click="showEditItemModal = false">❌ Отмена</button>
+      </div>
+    </form>
   </div>
 </div>
+
+<!-- Поставщики -->
+<section v-else-if="currentTab === 'Поставщики'">
+
+
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>🔍 Поиск</label>
+      <input type="text" class="input" v-model="supplierSearch" placeholder="Название или ИНН" />
+    </div>
+    <div class="filter-group button-group">
+      <label>&nbsp;</label>
+      <button class="add-button" @click="openAddSupplierModal">➕ Добавить поставщика</button>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card animate-card">
+      <p class="title">Всего поставщиков</p>
+      <p class="value">{{ suppliers.length }}</p>
+    </div>
+  </div>
+
+  <div class="table-section animate-table">
+    <div class="table-header">
+      <p class="title">Поставщики</p>
+      <button class="export-button" @click="exportSuppliersToExcel">📤 Экспорт в Excel</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Название</th>
+          <th>ИНН</th>
+          <th>Контакт</th>
+          <th>Телефон</th>
+          <th>Email</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="s in filteredSuppliers" :key="s.supplier_id">
+          <td>{{ s.name }}</td>
+          <td>{{ s.inn }}</td>
+          <td>{{ s.contact_person }}</td>
+          <td>{{ s.phone }}</td>
+          <td>{{ s.email }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-btn edit" @click="openEditSupplierModal(s)">✏️</button>
+              <button class="action-btn delete" @click="deleteSupplier(s)">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div v-if="filteredSuppliers.length === 0" class="empty-message">
+      Нет поставщиков по фильтру
+    </div>
+  </div>
+
+  <!-- Модалка добавления -->
+  <div v-if="showAddSupplierModal" class="modal-overlay" @click.self="showAddSupplierModal = false">
+    <div class="modal">
+      <h3>Добавить поставщика</h3>
+      <div class="form-group"><label>Название</label><input v-model="newSupplier.name" /></div>
+      <div class="form-group"><label>ИНН</label><input v-model="newSupplier.inn" /></div>
+      <div class="form-group"><label>Контакт</label><input v-model="newSupplier.contact_person" /></div>
+      <div class="form-group"><label>Телефон</label><input v-model="newSupplier.phone" /></div>
+      <div class="form-group"><label>Email</label><input v-model="newSupplier.email" /></div>
+      <div class="modal-actions">
+        <button @click="confirmAddSupplier">💾 Сохранить</button>
+        <button @click="showAddSupplierModal = false">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка редактирования -->
+  <div v-if="showEditSupplierModal" class="modal-overlay" @click.self="showEditSupplierModal = false">
+    <div class="modal">
+      <h3>Редактировать поставщика</h3>
+      <div class="form-group"><label>Название</label><input v-model="supplierToEdit.name" /></div>
+      <div class="form-group"><label>ИНН</label><input v-model="supplierToEdit.inn" /></div>
+      <div class="form-group"><label>Контакт</label><input v-model="supplierToEdit.contact_person" /></div>
+      <div class="form-group"><label>Телефон</label><input v-model="supplierToEdit.phone" /></div>
+      <div class="form-group"><label>Email</label><input v-model="supplierToEdit.email" /></div>
+      <div class="modal-actions">
+        <button @click="confirmEditSupplier">💾 Сохранить</button>
+        <button @click="showEditSupplierModal = false">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+</section>
 
         </section>
 
@@ -730,7 +841,38 @@ const newInbound = ref({
   quantity: 1,
   received_at: "",
 })
-const suppliers = ref([]) // список поставщиков
+const suppliers = ref([]);
+const supplierSearch = ref('');
+const filteredSuppliers = computed(() =>
+  suppliers.value.filter(s =>
+    (s.name || '').toLowerCase().includes(supplierSearch.value.toLowerCase()) ||
+    (s.inn || '').toLowerCase().includes(supplierSearch.value.toLowerCase())
+  )
+);
+const showAddSupplierModal = ref(false);
+const showEditSupplierModal = ref(false);
+const newSupplier = ref({ name: '', inn: '', contact_person: '', phone: '', email: '' });
+const supplierToEdit = ref({});
+
+function openAddSupplierModal() { showAddSupplierModal.value = true }
+function confirmAddSupplier() {
+  suppliers.value.push({ ...newSupplier.value, supplier_id: Date.now() })
+  showAddSupplierModal.value = false
+  newSupplier.value = { name: '', inn: '', contact_person: '', phone: '', email: '' }
+}
+function openEditSupplierModal(s) { supplierToEdit.value = { ...s }; showEditSupplierModal.value = true }
+function confirmEditSupplier() {
+  const idx = suppliers.value.findIndex(x => x.supplier_id === supplierToEdit.value.supplier_id)
+  if (idx !== -1) suppliers.value[idx] = { ...supplierToEdit.value }
+  showEditSupplierModal.value = false
+}
+function deleteSupplier(s) {
+  suppliers.value = suppliers.value.filter(x => x.supplier_id !== s.supplier_id)
+}
+function exportSuppliersToExcel() {
+  alert('Заглушка экспорта поставщиков')
+}
+
 function exportToExcel() {
   window.go.app.App.ExportStockToExcel().then(base64data => {
     const binary = atob(base64data);
@@ -739,6 +881,7 @@ function exportToExcel() {
     for (let i = 0; i < len; i++) {
       bytes[i] = binary.charCodeAt(i);
     }
+
     const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -752,6 +895,14 @@ function exportToExcel() {
 function openAddDeliveryModal() {
   showAddDeliveryModal.value = true
 }
+const averagePrice = computed(() => {
+  if (!items.value.length) return '—'
+  // Игнорируем товары без цены (null или 0 можно убрать по желанию)
+  const filtered = items.value.filter(i => i.price !== null && i.price !== undefined)
+  if (!filtered.length) return '—'
+  const sum = filtered.reduce((acc, i) => acc + Number(i.price), 0)
+  return (sum / filtered.length).toLocaleString('ru-RU', { minimumFractionDigits: 2 })
+})
 
   function openEditDeliveryModal(delivery) {
   let date = delivery.received_at
@@ -1093,14 +1244,11 @@ const selectedCategory = ref('');
 
 const filteredItems = computed(() =>
   items.value.filter(i =>
-    (!selectedCategory.value || i.category === selectedCategory.value) &&
-    (
-      i.name.toLowerCase().includes(itemSearch.value.toLowerCase()) ||
-      i.sku.toLowerCase().includes(itemSearch.value.toLowerCase()) ||
-      (i.category && i.category.toLowerCase().includes(itemSearch.value.toLowerCase()))
-    )
+    i.name.toLowerCase().includes(itemSearch.value.toLowerCase()) ||
+    i.sku.toLowerCase().includes(itemSearch.value.toLowerCase())
   )
 );
+
 
 // Минимальный и максимальный остаток
 const minStock = computed(() => {
@@ -1238,6 +1386,9 @@ async function confirmEditItem() {
     alert("Заполните обязательные поля");
     return;
   }
+  // Явно ставим null, если поля пустые (или 0? зависит от бизнес-логики)
+  if (itemToEdit.value.price === "") itemToEdit.value.price = null;
+  if (itemToEdit.value.cost === "") itemToEdit.value.cost = null;
   try {
     await UpdateItem(itemToEdit.value)
     showEditItemModal.value = false
@@ -1246,6 +1397,7 @@ async function confirmEditItem() {
     alert('Ошибка при обновлении: ' + (e?.message || ''))
   }
 }
+~
 
 async function deleteItem(item) {
   if (!confirm(`Удалить товар "${item.name}"?`)) return
@@ -1273,9 +1425,9 @@ onMounted(async () => {
       user.value = null;
     }
   }
+  console.log('items:', items.value)
   GetItems().then(data => items.value = data || []);
   GetWeeklyStockTrend().then(data => weeklyStockData.value = data)
-  GetAllItems().then(data => items.value = data)
   GetDashboard().then(data => {
     totalStock.value = data.total_stock
     itemCount.value = data.item_count

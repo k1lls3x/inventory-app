@@ -717,3 +717,29 @@ select.input:focus {
   transform: scale(0.99);
   box-shadow: 0 1px 5px #adc6ff1a;
 }
+.item-edit-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.68rem;
+}
+.form-row {
+  display: flex;
+  gap: 0.7rem;
+}
+.form-group.half {
+  flex: 1;
+  min-width: 0;
+}
+.modal-actions-row {
+  display: flex;
+  gap: 1.12rem;
+  margin-top: 1.22rem;
+  justify-content: flex-end;
+}
+.input-modern {
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .form-row { flex-direction: column; gap: 0.32rem; }
+}

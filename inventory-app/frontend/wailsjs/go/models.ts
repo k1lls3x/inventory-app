@@ -102,6 +102,20 @@ export namespace model {
 	        this.warehouse = source["warehouse"];
 	    }
 	}
+	export class JSONNullFloat64 {
+	    Float64: number;
+	    Valid: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new JSONNullFloat64(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Float64 = source["Float64"];
+	        this.Valid = source["Valid"];
+	    }
+	}
 	export class Item {
 	    item_id: number;
 	    sku: string;
@@ -110,8 +124,8 @@ export namespace model {
 	    uom: string;
 	    reorder_level: number;
 	    reorder_qty: number;
-	    Price: sql.NullFloat64;
-	    Cost: sql.NullFloat64;
+	    price: JSONNullFloat64;
+	    cost: JSONNullFloat64;
 	    // Go type: time
 	    created_at: any;
 	
@@ -128,8 +142,8 @@ export namespace model {
 	        this.uom = source["uom"];
 	        this.reorder_level = source["reorder_level"];
 	        this.reorder_qty = source["reorder_qty"];
-	        this.Price = this.convertValues(source["Price"], sql.NullFloat64);
-	        this.Cost = this.convertValues(source["Cost"], sql.NullFloat64);
+	        this.price = this.convertValues(source["price"], JSONNullFloat64);
+	        this.cost = this.convertValues(source["cost"], JSONNullFloat64);
 	        this.created_at = this.convertValues(source["created_at"], null);
 	    }
 	
@@ -231,6 +245,7 @@ export namespace model {
 	        this.quantity = source["quantity"];
 	    }
 	}
+	
 	export class Stock {
 	    stock_id: number;
 	    item_id: number;
@@ -318,25 +333,6 @@ export namespace model {
 	        this.warehouse_id = source["warehouse_id"];
 	        this.name = source["name"];
 	        this.location = source["location"];
-	    }
-	}
-
-}
-
-export namespace sql {
-	
-	export class NullFloat64 {
-	    Float64: number;
-	    Valid: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new NullFloat64(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Float64 = source["Float64"];
-	        this.Valid = source["Valid"];
 	    }
 	}
 

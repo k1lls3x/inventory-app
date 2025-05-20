@@ -1,6 +1,7 @@
 package model
 import "time"
-import "database/sql"
+
+
 type User struct {
 	UserID   int    `db:"user_id" json:"user_id"`
 	Username string `db:"username" json:"username"`
@@ -9,17 +10,18 @@ type User struct {
 	Role     string `db:"role" json:"role"`
 }
 
+
 type Item struct {
-	ItemID       int     `db:"item_id" json:"item_id"`
-	SKU          string  `db:"sku" json:"sku"`
-	Name         string  `db:"name" json:"name"`
-	Description  *string `db:"description" json:"description"`
-	UOM          string  `db:"uom" json:"uom"`
-	ReorderLevel int     `db:"reorder_level" json:"reorder_level"`
-	ReorderQty   int     `db:"reorder_qty" json:"reorder_qty"`
-  Price sql.NullFloat64 `db:"price"`
-  Cost  sql.NullFloat64 `db:"cost"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ItemID       int              `db:"item_id" json:"item_id"`
+	SKU          string           `db:"sku" json:"sku"`
+	Name         string           `db:"name" json:"name"`
+	Description  *string          `db:"description" json:"description"`
+	UOM          string           `db:"uom" json:"uom"`
+	ReorderLevel int              `db:"reorder_level" json:"reorder_level"`
+	ReorderQty   int              `db:"reorder_qty" json:"reorder_qty"`
+	Price        JSONNullFloat64  `db:"price" json:"price"`
+	Cost         JSONNullFloat64  `db:"cost" json:"cost"`
+	CreatedAt    time.Time        `db:"created_at" json:"created_at"`
 }
 
 type Supplier struct {
