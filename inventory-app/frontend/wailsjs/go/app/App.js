@@ -14,6 +14,10 @@ export function AddStock(arg1, arg2, arg3) {
   return window['go']['app']['App']['AddStock'](arg1, arg2, arg3);
 }
 
+export function AddSupplier(arg1) {
+  return window['go']['app']['App']['AddSupplier'](arg1);
+}
+
 export function ChangePassword(arg1, arg2, arg3) {
   return window['go']['app']['App']['ChangePassword'](arg1, arg2, arg3);
 }
@@ -28,6 +32,10 @@ export function DeleteInbound(arg1) {
 
 export function EditInbound(arg1) {
   return window['go']['app']['App']['EditInbound'](arg1);
+}
+
+export function EditSupplier(arg1) {
+  return window['go']['app']['App']['EditSupplier'](arg1);
 }
 
 export function ExportStockToExcel() {
@@ -104,6 +112,10 @@ export function RemoveItem(arg1) {
 
 export function RemoveStock(arg1) {
   return window['go']['app']['App']['RemoveStock'](arg1);
+}
+
+export function RemoveSupplier(arg1) {
+  return window['go']['app']['App']['RemoveSupplier'](arg1);
 }
 
 export function UpdateItem(arg1) {

@@ -25,11 +25,13 @@ type Item struct {
 }
 
 type Supplier struct {
-	SupplierID  int     `db:"supplier_id" json:"supplier_id"`
-	Name        string  `db:"name" json:"name"`
-	ContactInfo *string `db:"contact_info" json:"contact_info"`
+	SupplierID    int     `db:"supplier_id" json:"supplier_id"`
+	Name          string  `db:"name" json:"name"`
+	Inn           *string `db:"inn" json:"inn"`
+	ContactPerson *string `db:"contact_person" json:"contact_person"`
+	Phone         *string `db:"phone" json:"phone"`
+	Email         *string `db:"email" json:"email"`
 }
-
 type Inbound struct {
 	InboundID    int       `db:"inbound_id" json:"inbound_id"`
 	ItemID       int       `db:"item_id" json:"item_id"`

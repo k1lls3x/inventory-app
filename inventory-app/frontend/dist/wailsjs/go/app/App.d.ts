@@ -9,6 +9,8 @@ export function AddItem(arg1:model.Item):Promise<void>;
 
 export function AddStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
+export function AddSupplier(arg1:model.Supplier):Promise<void>;
+
 export function ChangePassword(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function ChangeStock(arg1:number,arg2:number,arg3:number):Promise<void>;
@@ -16,6 +18,8 @@ export function ChangeStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 export function DeleteInbound(arg1:number):Promise<void>;
 
 export function EditInbound(arg1:model.Inbound):Promise<void>;
+
+export function EditSupplier(arg1:model.Supplier):Promise<void>;
 
 export function ExportStockToExcel():Promise<string>;
 
@@ -54,5 +58,7 @@ export function RegisterUser(arg1:string,arg2:string,arg3:string,arg4:string):Pr
 export function RemoveItem(arg1:string):Promise<void>;
 
 export function RemoveStock(arg1:number):Promise<void>;
+
+export function RemoveSupplier(arg1:number):Promise<void>;
 
 export function UpdateItem(arg1:model.Item):Promise<void>;

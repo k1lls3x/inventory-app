@@ -85,3 +85,8 @@ BEGIN
     END;
 END$$;
 
+ALTER TABLE supplier
+  ADD COLUMN inn VARCHAR(20),
+  ADD COLUMN contact_person VARCHAR(100),
+  ADD COLUMN phone VARCHAR(32),
+  ADD COLUMN email VARCHAR(64);

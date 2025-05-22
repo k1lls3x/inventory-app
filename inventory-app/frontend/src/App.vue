@@ -99,10 +99,10 @@
         </section>
  <!-- Пользователи (видно только админу) -->
  <section v-if="currentTab === 'Пользователи' && user?.role === 'admin'">
-    <UserTable />
+
   </section>
         <!-- Остатки -->
-        <section v-else-if="currentTab === 'Остатки'">
+        <section v-if="currentTab === 'Остатки' && ['admin', 'manager', 'worker'].includes(user?.role)">
           <div class="filters-bar">
             <div class="filter-group">
               <label>📦 Склад</label>
@@ -220,8 +220,7 @@
         </section>
 
         <!-- Поставки -->
-        <section v-else-if="currentTab === 'Поставки'">
-          <div class="filters-bar">
+        <section v-if="currentTab === 'Поставки' && ['admin', 'manager', 'worker'].includes(user?.role)">          <div class="filters-bar">
             <div class="filter-group">
               <label>📅 Дата</label>
               <input type="date" class="input" v-model="selectedDeliveryDate" :max="'3030-12-31'" />
@@ -371,11 +370,11 @@
               </div>
             </div>
           </div>
-          <div>{{ items.length }}</div>
+
         </section>
 
         <!-- Товары -->
-        <section v-else-if="currentTab === 'Товары'">
+        <section v-if="currentTab === 'Товары' && ['admin', 'manager'].includes(user?.role)">
           <div class="filters-bar">
         <div class="filter-group">
           <label>🔍 Поиск</label>
@@ -505,104 +504,116 @@
   </div>
 </div>
 
+
+
+        </section>
 <!-- Поставщики -->
-<section v-else-if="currentTab === 'Поставщики'">
+<section v-if="currentTab === 'Поставщики' && ['admin', 'manager'].includes(user?.role)">
 
 
-  <div class="filters-bar">
-    <div class="filter-group">
-      <label>🔍 Поиск</label>
-      <input type="text" class="input" v-model="supplierSearch" placeholder="Название или ИНН" />
-    </div>
-    <div class="filter-group button-group">
-      <label>&nbsp;</label>
-      <button class="add-button" @click="openAddSupplierModal">➕ Добавить поставщика</button>
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>🔍 Поиск</label>
+    <input type="text" class="input" v-model="supplierSearch" placeholder="Название или ИНН" />
+  </div>
+  <div class="filter-group button-group">
+    <label>&nbsp;</label>
+    <button class="add-button" @click="openAddSupplierModal">➕ Добавить поставщика</button>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card animate-card">
+    <p class="title">Всего поставщиков</p>
+    <p class="value">{{ suppliers.length }}</p>
+  </div>
+</div>
+
+<div class="table-section animate-table">
+  <div class="table-header">
+    <p class="title">Поставщики</p>
+    <button class="export-button" @click="exportSuppliersToExcel">📤 Экспорт в Excel</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Название</th>
+        <th>ИНН</th>
+        <th>Контакт</th>
+        <th>Телефон</th>
+        <th>Email</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="s in filteredSuppliers" :key="s.supplier_id">
+        <td>{{ s.name }}</td>
+        <td>{{ s.inn }}</td>
+        <td>{{ s.contact_person }}</td>
+        <td>{{ s.phone }}</td>
+        <td>{{ s.email }}</td>
+        <td>
+          <div class="action-buttons">
+            <button class="action-btn edit" @click="openEditSupplierModal(s)">✏️</button>
+            <button class="action-btn delete" @click="deleteSupplier(s)">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div v-if="filteredSuppliers.length === 0" class="empty-message">
+    Нет поставщиков по фильтру
+  </div>
+</div>
+
+<!-- Модалка добавления -->
+<div v-if="showAddSupplierModal" class="modal-overlay" @click.self="showAddSupplierModal = false">
+  <div class="modal">
+    <h3>Добавить поставщика</h3>
+    <div class="form-group"><label>Название</label><input v-model="newSupplier.name" /></div>
+    <div class="form-group"><label>ИНН</label><input v-model="newSupplier.inn" /></div>
+    <div class="form-group"><label>Контакт</label><input v-model="newSupplier.contact_person" /></div>
+    <div class="form-group"><label>Телефон</label> <input
+          v-model="supplierToEdit.phone"
+          @input="maskPhone($event, supplierToEdit)"
+          maxlength="18"
+          placeholder="+7 (___)-___-__-__"
+          type="tel"
+        /></div>
+    <div class="form-group"><label>Email</label><input v-model="newSupplier.email" /></div>
+    <div class="modal-actions">
+      <button @click="confirmAddSupplier">💾 Сохранить</button>
+      <button @click="showAddSupplierModal = false">❌ Отмена</button>
     </div>
   </div>
+</div>
 
-  <div class="cards">
-    <div class="card animate-card">
-      <p class="title">Всего поставщиков</p>
-      <p class="value">{{ suppliers.length }}</p>
+<!-- Модалка редактирования -->
+<div v-if="showEditSupplierModal" class="modal-overlay" @click.self="showEditSupplierModal = false">
+  <div class="modal">
+    <h3>Редактировать поставщика</h3>
+    <div class="form-group"><label>Название</label><input v-model="supplierToEdit.name" /></div>
+    <div class="form-group"><label>ИНН</label><input v-model="supplierToEdit.inn" /></div>
+    <div class="form-group"><label>Контакт</label><input v-model="supplierToEdit.contact_person" /></div>
+    <div class="form-group"><label>Телефон</label><input
+  v-model="supplierToEdit.phone"
+  @input="maskPhone($event, supplierToEdit)"
+  maxlength="18"
+  placeholder="+7 (___)-___-__-__"
+  type="tel"
+/></div>
+    <div class="form-group"><label>Email</label><input v-model="supplierToEdit.email" /></div>
+    <div class="modal-actions">
+      <button @click="confirmEditSupplier">💾 Сохранить</button>
+      <button @click="showEditSupplierModal = false">❌ Отмена</button>
     </div>
   </div>
-
-  <div class="table-section animate-table">
-    <div class="table-header">
-      <p class="title">Поставщики</p>
-      <button class="export-button" @click="exportSuppliersToExcel">📤 Экспорт в Excel</button>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Название</th>
-          <th>ИНН</th>
-          <th>Контакт</th>
-          <th>Телефон</th>
-          <th>Email</th>
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="s in filteredSuppliers" :key="s.supplier_id">
-          <td>{{ s.name }}</td>
-          <td>{{ s.inn }}</td>
-          <td>{{ s.contact_person }}</td>
-          <td>{{ s.phone }}</td>
-          <td>{{ s.email }}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="action-btn edit" @click="openEditSupplierModal(s)">✏️</button>
-              <button class="action-btn delete" @click="deleteSupplier(s)">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div v-if="filteredSuppliers.length === 0" class="empty-message">
-      Нет поставщиков по фильтру
-    </div>
-  </div>
-
-  <!-- Модалка добавления -->
-  <div v-if="showAddSupplierModal" class="modal-overlay" @click.self="showAddSupplierModal = false">
-    <div class="modal">
-      <h3>Добавить поставщика</h3>
-      <div class="form-group"><label>Название</label><input v-model="newSupplier.name" /></div>
-      <div class="form-group"><label>ИНН</label><input v-model="newSupplier.inn" /></div>
-      <div class="form-group"><label>Контакт</label><input v-model="newSupplier.contact_person" /></div>
-      <div class="form-group"><label>Телефон</label><input v-model="newSupplier.phone" /></div>
-      <div class="form-group"><label>Email</label><input v-model="newSupplier.email" /></div>
-      <div class="modal-actions">
-        <button @click="confirmAddSupplier">💾 Сохранить</button>
-        <button @click="showAddSupplierModal = false">❌ Отмена</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Модалка редактирования -->
-  <div v-if="showEditSupplierModal" class="modal-overlay" @click.self="showEditSupplierModal = false">
-    <div class="modal">
-      <h3>Редактировать поставщика</h3>
-      <div class="form-group"><label>Название</label><input v-model="supplierToEdit.name" /></div>
-      <div class="form-group"><label>ИНН</label><input v-model="supplierToEdit.inn" /></div>
-      <div class="form-group"><label>Контакт</label><input v-model="supplierToEdit.contact_person" /></div>
-      <div class="form-group"><label>Телефон</label><input v-model="supplierToEdit.phone" /></div>
-      <div class="form-group"><label>Email</label><input v-model="supplierToEdit.email" /></div>
-      <div class="modal-actions">
-        <button @click="confirmEditSupplier">💾 Сохранить</button>
-        <button @click="showEditSupplierModal = false">❌ Отмена</button>
-      </div>
-    </div>
-  </div>
+</div>
 </section>
-
-        </section>
-
         <!-- Другое (заглушка) -->
-        <section v-else>
-          <p>Раздел "{{ currentTab }}" в разработке...</p>
-        </section>
+        <section v-if="!tabs.includes(currentTab)">
+    <p>Раздел "{{ currentTab }}" в разработке или доступ ограничен...</p>
+  </section>
       </main>
     </div>
    <!-- МОДАЛКА ПРОФИЛЯ - вставь в свой <template> -->
@@ -718,9 +729,13 @@ import {
   GetItems,
   AddItem,
   UpdateItem,
-  RemoveItem
+  RemoveItem,
+  EditSupplier,
+  AddSupplier,
+  RemoveSupplier
 
 } from '../wailsjs/go/app/App'
+
 const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
 const emit = defineEmits(['login-success'])
 
@@ -729,10 +744,12 @@ function onLoginSuccess(userData) {
   loggedIn.value = true
   localStorage.setItem('loggedIn', 'true')
 }
+
 function logout() {
   localStorage.removeItem('loggedIn')
   loggedIn.value = false
 }
+
 function handleLogin() {
   error.value = ''
   loading.value = true
@@ -746,6 +763,7 @@ function handleLogin() {
     loading.value = false
   }, 700)
 }
+
 const user = ref(null) // по умолчанию null
 // Подгружай реального пользователя с бэка после логина
 function roleName(role) {
@@ -762,6 +780,7 @@ const newPassword = ref('')
 const repeatPassword = ref('')
 const profileError = ref('')
 const profileSuccess = ref('')
+
 const tabs = computed(() => {
   if (!user.value) return [];
   if (user.value.role === 'admin') {
@@ -817,6 +836,7 @@ async function changePassword() {
     profileError.value = e?.message || 'Ошибка смены пароля'
   }
 }
+
 const showEditDeliveryModal = ref(false)
 const deliveryToEdit = ref(null)
 const showEditModal = ref(false)
@@ -841,7 +861,9 @@ const newInbound = ref({
   quantity: 1,
   received_at: "",
 })
-const suppliers = ref([]);
+const suppliers = ref([
+  { supplier_id: 1, name: "Тестовый поставщик", inn: "111222333", contact_person: "Иванов", phone: "123", email: "test@test.ru" }
+])
 const supplierSearch = ref('');
 const filteredSuppliers = computed(() =>
   suppliers.value.filter(s =>
@@ -855,20 +877,59 @@ const newSupplier = ref({ name: '', inn: '', contact_person: '', phone: '', emai
 const supplierToEdit = ref({});
 
 function openAddSupplierModal() { showAddSupplierModal.value = true }
-function confirmAddSupplier() {
-  suppliers.value.push({ ...newSupplier.value, supplier_id: Date.now() })
-  showAddSupplierModal.value = false
-  newSupplier.value = { name: '', inn: '', contact_person: '', phone: '', email: '' }
+async function confirmAddSupplier() {
+  // Валидация при необходимости
+  try {
+    await window.go.app.App.AddSupplier(newSupplier.value)
+    showAddSupplierModal.value = false
+    newSupplier.value = { name: '', inn: '', contact_person: '', phone: '', email: '' }
+    // После добавления — обновить список с бэка
+    suppliers.value = await GetSuppliers() || []
+  } catch (e) {
+    alert('Ошибка при добавлении: ' + (e?.message || ''))
+  }
 }
+
+async function confirmEditSupplier() {
+  try {
+    await window.go.app.App.EditSupplier(supplierToEdit.value)
+    showEditSupplierModal.value = false
+    suppliers.value = await GetSuppliers() || []
+  } catch (e) {
+    alert('Ошибка при обновлении: ' + (e?.message || ''))
+  }
+}
+
 function openEditSupplierModal(s) { supplierToEdit.value = { ...s }; showEditSupplierModal.value = true }
-function confirmEditSupplier() {
-  const idx = suppliers.value.findIndex(x => x.supplier_id === supplierToEdit.value.supplier_id)
-  if (idx !== -1) suppliers.value[idx] = { ...supplierToEdit.value }
-  showEditSupplierModal.value = false
+
+async function deleteSupplier(s) {
+  if (!confirm(`Удалить поставщика "${s.name}"?`)) return
+  try {
+    // Удаляем по уникальному supplier_id
+    await window.go.app.App.RemoveSupplier(s.supplier_id)
+    // После удаления — обновить список с бэка
+    suppliers.value = await GetSuppliers() || []
+  } catch (e) {
+    alert('Ошибка при удалении: ' + (e?.message || ''))
+  }
 }
-function deleteSupplier(s) {
-  suppliers.value = suppliers.value.filter(x => x.supplier_id !== s.supplier_id)
+
+function maskPhone(event, obj) {
+  let v = event.target.value.replace(/\D/g, '');
+  if (v.startsWith('8')) v = '7' + v.slice(1); // Преобразуем 8 -> 7
+  if (!v.startsWith('7')) v = '7' + v;
+  v = v.slice(0, 11);
+
+  let res = '+7';
+  if (v.length > 1) res += ' (' + v.slice(1, 4);
+  if (v.length >= 4) res += ')';
+  if (v.length >= 4) res += '-' + v.slice(4, 7);
+  if (v.length >= 7) res += '-' + v.slice(7, 9);
+  if (v.length >= 9) res += '-' + v.slice(9, 11);
+  obj.phone = res;
 }
+
+
 function exportSuppliersToExcel() {
   alert('Заглушка экспорта поставщиков')
 }
@@ -892,9 +953,11 @@ function exportToExcel() {
     alert("Ошибка экспорта: " + err);
   });
 }
+
 function openAddDeliveryModal() {
   showAddDeliveryModal.value = true
 }
+
 const averagePrice = computed(() => {
   if (!items.value.length) return '—'
   // Игнорируем товары без цены (null или 0 можно убрать по желанию)

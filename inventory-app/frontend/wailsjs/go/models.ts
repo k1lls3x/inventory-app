@@ -288,7 +288,10 @@ export namespace model {
 	export class Supplier {
 	    supplier_id: number;
 	    name: string;
-	    contact_info?: string;
+	    inn?: string;
+	    contact_person?: string;
+	    phone?: string;
+	    email?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Supplier(source);
@@ -298,7 +301,10 @@ export namespace model {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.supplier_id = source["supplier_id"];
 	        this.name = source["name"];
-	        this.contact_info = source["contact_info"];
+	        this.inn = source["inn"];
+	        this.contact_person = source["contact_person"];
+	        this.phone = source["phone"];
+	        this.email = source["email"];
 	    }
 	}
 	export class User {

@@ -144,6 +144,18 @@ func (a *App)  EditInbound(inb model.Inbound) error{
 func (a *App)  GetSuppliers() ([]model.Supplier, error){
 	return repository.GetSuppliers()
 }
+
+func (a *App) EditSupplier(sp model.Supplier) error {
+	return repository.EditSupplier(sp)
+}
+
+func (a *App) AddSupplier(sp model.Supplier) error{
+	return repository.AddSupplier(sp)
+}
+
+func (a *App) RemoveSupplier(supplierId int) error {
+	return repository.RemoveSupplier(supplierId)
+}
 //-----------------------Auth---------------------------------\\
 
 func (a *App) RegisterUser(username, password, fullName, role string) error {
