@@ -15,6 +15,8 @@ export function ChangePassword(arg1:string,arg2:string,arg3:string):Promise<void
 
 export function ChangeStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
+export function ChangeUserData(arg1:model.UserUpdate):Promise<void>;
+
 export function DeleteInbound(arg1:number):Promise<void>;
 
 export function EditInbound(arg1:model.Inbound):Promise<void>;
@@ -47,6 +49,8 @@ export function GetTopItems():Promise<Array<model.ItemWithStock>>;
 
 export function GetTurnoverByWarehouse():Promise<Array<model.ItemTurnoverByWarehouse>>;
 
+export function GetUsers():Promise<Array<model.User>>;
+
 export function GetWarehouses():Promise<Array<model.Warehouse>>;
 
 export function GetWeeklyStockTrend():Promise<Array<model.DailyStock>>;
@@ -60,5 +64,7 @@ export function RemoveItem(arg1:string):Promise<void>;
 export function RemoveStock(arg1:number):Promise<void>;
 
 export function RemoveSupplier(arg1:number):Promise<void>;
+
+export function RemoveUser(arg1:number):Promise<void>;
 
 export function UpdateItem(arg1:model.Item):Promise<void>;

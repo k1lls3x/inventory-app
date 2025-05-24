@@ -99,8 +99,108 @@
         </section>
  <!-- Пользователи (видно только админу) -->
  <section v-if="currentTab === 'Пользователи' && user?.role === 'admin'">
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>🔍 Поиск</label>
+      <input
+        type="text"
+        class="input"
+        v-model="userSearch"
+        placeholder="Имя пользователя, ФИО или роль"
+      />
+    </div>
+    <div class="filter-group button-group">
+      <label>&nbsp;</label>
+      <button class="add-button" @click="openAddUserModal">➕ Добавить пользователя</button>
+    </div>
+  </div>
 
-  </section>
+  <div class="cards">
+    <div class="card animate-card">
+      <p class="title">Всего пользователей</p>
+      <p class="value">{{ users.length }}</p>
+    </div>
+  </div>
+
+  <div class="table-section animate-table">
+    <div class="table-header">
+      <p class="title">Пользователи</p>
+      <button class="export-button" @click="exportUsersToExcel">📤 Экспорт в Excel</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Логин</th>
+          <th>ФИО</th>
+          <th>Роль</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="u in filteredUsers" :key="u.user_id">
+          <td>{{ u.user_id }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.full_name }}</td>
+          <td>{{ roleName(u.role) }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-btn edit" @click="openEditUserModal(u)">✏️</button>
+              <button class="action-btn delete" @click="deleteUser(u)">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div v-if="filteredUsers.length === 0" class="empty-message">
+      Нет пользователей по фильтру
+    </div>
+  </div>
+
+  <!-- Модалка добавления пользователя -->
+  <div v-if="showAddUserModal" class="modal-overlay" @click.self="closeAddUserModal">
+    <div class="modal">
+      <h3>Добавить пользователя</h3>
+      <div class="form-group"><label>Логин</label><input v-model="newUser.username" /></div>
+      <div class="form-group"><label>ФИО</label><input v-model="newUser.full_name" /></div>
+      <div class="form-group"><label>Пароль</label><input type="password" v-model="newUser.password" /></div>
+      <div class="form-group"><label>Роль</label>
+        <select v-model="newUser.role">
+          <option disabled value="">Выберите роль</option>
+          <option value="admin">Администратор</option>
+          <option value="manager">Менеджер</option>
+          <option value="worker">Сотрудник</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button @click="confirmAddUser">💾 Сохранить</button>
+        <button @click="closeAddUserModal">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка редактирования пользователя -->
+  <div v-if="showEditUserModal" class="modal-overlay" @click.self="closeEditUserModal">
+    <div class="modal">
+      <h3>Редактировать пользователя</h3>
+      <div class="form-group"><label>Логин</label><input v-model="userToEdit.username" /></div>
+      <div class="form-group"><label>ФИО</label><input v-model="userToEdit.full_name" /></div>
+      <div class="form-group"><label>Новый пароль</label><input type="password" v-model="userToEdit.newPassword" placeholder="Оставьте пустым для без изменений" /></div>
+      <div class="form-group"><label>Роль</label>
+        <select v-model="userToEdit.role">
+          <option value="admin">Администратор</option>
+          <option value="manager">Менеджер</option>
+          <option value="worker">Сотрудник</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button @click="confirmEditUser">💾 Сохранить</button>
+        <button @click="closeEditUserModal">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+</section>
+
         <!-- Остатки -->
         <section v-if="currentTab === 'Остатки' && ['admin', 'manager', 'worker'].includes(user?.role)">
           <div class="filters-bar">
@@ -574,7 +674,7 @@
     <div class="form-group"><label>ИНН</label><input v-model="newSupplier.inn" /></div>
     <div class="form-group"><label>Контакт</label><input v-model="newSupplier.contact_person" /></div>
     <div class="form-group"><label>Телефон</label> <input
-          v-model="supplierToEdit.phone"
+          v-model="newSupplier.phone"
           @input="maskPhone($event, supplierToEdit)"
           maxlength="18"
           placeholder="+7 (___)-___-__-__"
@@ -596,7 +696,7 @@
     <div class="form-group"><label>ИНН</label><input v-model="supplierToEdit.inn" /></div>
     <div class="form-group"><label>Контакт</label><input v-model="supplierToEdit.contact_person" /></div>
     <div class="form-group"><label>Телефон</label><input
-  v-model="supplierToEdit.phone"
+  v-model="newSupplier.phone"
   @input="maskPhone($event, supplierToEdit)"
   maxlength="18"
   placeholder="+7 (___)-___-__-__"
@@ -732,8 +832,11 @@ import {
   RemoveItem,
   EditSupplier,
   AddSupplier,
-  RemoveSupplier
-
+  RemoveSupplier,
+  GetUsers,
+  RegisterUser,
+  RemoveUser,
+  ChangeUserData,
 } from '../wailsjs/go/app/App'
 
 const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
@@ -748,6 +851,90 @@ function onLoginSuccess(userData) {
 function logout() {
   localStorage.removeItem('loggedIn')
   loggedIn.value = false
+}
+
+// Пользователи
+const users = ref([])
+const userSearch = ref('')
+const showAddUserModal = ref(false)
+const showEditUserModal = ref(false)
+const newUser = ref({ username: '', full_name: '', password: '', role: '' })
+const userToEdit = ref({})
+
+const filteredUsers = computed(() =>
+  users.value.filter(u =>
+    (u.username || '').toLowerCase().includes(userSearch.value.toLowerCase()) ||
+    (u.full_name || '').toLowerCase().includes(userSearch.value.toLowerCase()) ||
+    (roleName(u.role) || '').toLowerCase().includes(userSearch.value.toLowerCase())
+  )
+)
+
+function openAddUserModal() { showAddUserModal.value = true }
+function closeAddUserModal() {
+  showAddUserModal.value = false
+  newUser.value = { username: '', full_name: '', password: '', role: '' }
+}
+
+async function confirmAddUser() {
+  if (!newUser.value.username || !newUser.value.full_name || !newUser.value.password || !newUser.value.role) {
+    alert('Заполните все поля')
+    return
+  }
+  try {
+    await RegisterUser(
+  newUser.value.username,   // первый аргумент: username
+  newUser.value.password,   // второй аргумент: password
+  newUser.value.full_name,  // третий аргумент: fullName
+  newUser.value.role        // четвертый аргумент: role
+)
+    users.value = await GetUsers() || []
+    closeAddUserModal()
+  } catch (e) {
+    alert('Ошибка при добавлении пользователя: ' + (e?.message || ''))
+  }
+}
+
+
+function openEditUserModal(u) {
+  userToEdit.value = { ...u, newPassword: '' }
+  showEditUserModal.value = true
+}
+
+function closeEditUserModal() { showEditUserModal.value = false }
+async function confirmEditUser() {
+  if (!userToEdit.value.username || !userToEdit.value.full_name || !userToEdit.value.role) {
+    alert('Заполните все поля')
+    return
+  }
+  try {
+    const payload = {
+      user_id: userToEdit.value.user_id,
+      username: userToEdit.value.username,
+      full_name: userToEdit.value.full_name,
+      role: userToEdit.value.role,
+      // Передавай новый пароль только если он не пустой
+      password: userToEdit.value.newPassword || undefined
+    }
+    await ChangeUserData(payload)
+    users.value = await GetUsers() || []
+    closeEditUserModal()
+  } catch (e) {
+    alert('Ошибка при обновлении пользователя: ' + (e?.message || ''))
+  }
+}
+
+async function deleteUser(u) {
+  if (!confirm(`Удалить пользователя "${u.username}"?`)) return
+  try {
+    await RemoveUser(u.user_id)
+    users.value = await GetUsers() || []
+  } catch (e) {
+    alert('Ошибка при удалении: ' + (e?.message || ''))
+  }
+}
+
+function exportUsersToExcel() {
+  alert('Заглушка экспорта пользователей')
 }
 
 function handleLogin() {
@@ -1079,7 +1266,7 @@ const weeklyStockChartData = computed(() => ({
   datasets: [
     {
       label: 'Остатки',
-      data: weeklyStockData.value.map(d => d.total),
+      data: weeklyStockData.value.map(d => Number(d.total)),
       backgroundColor: 'rgba(0, 0, 0, 0.2)',   // полупрозрачный чёрный
       borderColor: '#000',                    // чёрная линия
       pointBackgroundColor: '#000',           // чёрные точки
@@ -1258,7 +1445,7 @@ function confirmEditStock() {
 )
     .then(() => {
       closeEditModal()
-      // Обновление данных
+      reloadWeeklyTrend()
       if (selectedWarehouseId.value === 0) {
         GetStockDetails().then(data => {
   stockList.value = data.map(s => ({
@@ -1349,6 +1536,9 @@ function closeAddModal() {
   showAddModal.value = false
   newStock.value = { item_id: 0, warehouse_id: 0, quantity: 0 }
 }
+async function reloadWeeklyTrend() {
+  weeklyStockData.value = await GetWeeklyStockTrend() || []
+}
 
 function confirmAddStock() {
   const filled = Object.values(newStock.value).every(v => v !== '' && v !== 0)
@@ -1363,6 +1553,7 @@ function confirmAddStock() {
     newStock.value.warehouse_id
   ).then(() => {
     closeAddModal()
+    reloadWeeklyTrend()
     if (selectedWarehouseId.value === 0) {
       GetStockDetails().then(data => {
         stockList.value = data.map(s => ({
@@ -1490,7 +1681,8 @@ onMounted(async () => {
   }
   console.log('items:', items.value)
   GetItems().then(data => items.value = data || []);
-  GetWeeklyStockTrend().then(data => weeklyStockData.value = data)
+  await GetWeeklyStockTrend().then(data => weeklyStockData.value = data)
+
   GetDashboard().then(data => {
     totalStock.value = data.total_stock
     itemCount.value = data.item_count
@@ -1520,18 +1712,26 @@ onMounted(async () => {
   GetTurnoverByWarehouse().then(data => turnoverData.value = data)
 })
 
-watch(currentTab, (tab) => {
+watch(currentTab, async (tab) => {
   if (tab === 'Дашборд') {
-    GetDashboard().then(data => {
-      totalStock.value = data.total_stock
-      itemCount.value = data.item_count
-      monthlyOrders.value = data.monthly_orders
-      newItems.value = data.new_items
-    })
-    GetTopItems().then(data => topItems.value = data)
-    GetTurnoverByWarehouse().then(data => turnoverData.value = data)
+    const data = await GetDashboard()
+    totalStock.value = data.total_stock
+    itemCount.value = data.item_count
+    monthlyOrders.value = data.monthly_orders
+    newItems.value = data.new_items
+
+    topItems.value = await GetTopItems() || []
+    turnoverData.value = await GetTurnoverByWarehouse() || []
+  }
+  if (tab === 'Пользователи' && user.value?.role === 'admin') {
+    try {
+      users.value = await GetUsers() || []
+    } catch (e) {
+      users.value = []
+    }
   }
 })
+
 
 watch(selectedWarehouseId, (id) => {
   const warehouseId = Number(id)
@@ -1575,421 +1775,5 @@ const filteredStockList = computed(() =>
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(55, 65, 81, 0.23);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.profile-modal-modern {
-  min-height: 545px;
-  width: 410px;
-  max-width: 94vw;
-  background: #f9fbff;
-  border-radius: 20px;
-  box-shadow: 0 10px 48px 0 #20223622;
-  padding: 2.7rem 2.2rem 2rem 2.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
-  animation: modalPopIn .23s cubic-bezier(.44,1.6,.41,.98);
-  position: relative;
-}
-
-@keyframes modalPopIn {
-  0% { transform: scale(0.96) translateY(20px); opacity: 0;}
-  100% { transform: scale(1) translateY(0); opacity: 1;}
-}
-
-.profile-header-modern {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-}
-.profile-avatar-modern {
-  width: 58px;
-  height: 58px;
-  background: linear-gradient(120deg, #e3eaff 70%, #f3f8ff 100%);
-  border-radius: 50%;
-  box-shadow: 0 3px 18px #e2eaff51;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.profile-title-modern {
-  font-size: 1.28rem;
-  font-weight: 900;
-  color: #212942;
-}
-.profile-role-modern {
-  color: #2563eb;
-  font-size: 1.09rem;
-  font-weight: 700;
-  opacity: .89;
-  margin-top: .08rem;
-}
-
-.profile-info-modern {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.1rem 1.25rem 1.1rem 1.25rem;
-  margin-bottom: .55rem;
-  margin-top: 0.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.03rem;
-  font-size: 1.05rem;
-  box-shadow: 0 2.5px 14px #e3eaff19;
-}
-.info-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.8rem;
-  line-height: 1.45;
-}
-.info-label {
-  color: #7082a4;
-  font-weight: 700;
-  font-size: 1.04rem;
-  min-width: 85px;
-  display: flex;
-  align-items: center;
-  letter-spacing: .01em;
-}
-.info-value {
-  color: #1a2544;
-  font-weight: 800;
-  font-size: 1.08rem;
-  letter-spacing: .02em;
-}
-
-.profile-divider {
-  height: 1px;
-  background: linear-gradient(90deg, #d4e0f6 10%, #fff 80%);
-  border: none;
-  margin: .55rem 0 .35rem 0;
-}
-
-.profile-change-title-modern {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #293052;
-  margin-top: .5rem;
-  margin-bottom: .16rem;
-}
-
-.profile-change-fields-modern {
-  display: flex;
-  flex-direction: column;
-  margin-top: .3rem;
-  margin-bottom: .35rem;
-  gap: .69rem;
-}
-.input-modern {
-  font-size: 1.08rem;
-  border-radius: 8px;
-  border: 1.1px solid #dde8f7;
-  padding: 0.48rem 1.08rem;
-  background: #f5f7fb;
-  transition: border .13s, box-shadow .13s;
-}
-.input-modern:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px #2563eb22;
-  outline: none;
-}
-
-.profile-actions-modern {
-  display: flex;
-  gap: .7rem;
-  justify-content: flex-end;
-  margin-top: .08rem;
-}
-
-.change-btn-modern {
-  background: linear-gradient(93deg, #2563eb 80%, #60a5fa 100%);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.52rem 1.7rem;
-  font-size: 1rem;
-  font-weight: 900;
-  cursor: pointer;
-  transition: background 0.13s, transform 0.11s;
-  letter-spacing: .01em;
-  box-shadow: 0 1.5px 8px #4f8cff11;
-}
-.change-btn-modern:hover {
-  background: linear-gradient(93deg, #1749d4 85%, #2563eb 100%);
-  transform: scale(1.035);
-}
-
-.close-btn-modern {
-  background: #f4f5fa;
-  color: #1a2544;
-  border: none;
-  border-radius: 8px;
-  padding: 0.52rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 700;
-  transition: background .14s, color .12s;
-}
-.close-btn-modern:hover {
-  background: #e6edff;
-  color: #1c2241;
-}
-
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.18s;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-.error-msg-modern, .success-msg-modern {
-  font-size: 1.06rem;
-  text-align: center;
-  font-weight: 700;
-  margin-top: 0.18rem;
-  letter-spacing: .01em;
-}
-.error-msg-modern { color: #e11d48; }
-.success-msg-modern { color: #22c55e; }
-
-@media (max-width: 520px) {
-  .profile-modal-modern {
-    width: 99vw;
-    padding: 1.2rem .2rem 1rem .2rem;
-    min-height: unset;
-    border-radius: 11px;
-  }
-  .profile-info-modern {
-    padding: 0.7rem 0.7rem 0.7rem 0.7rem;
-  }
-  .profile-header-modern {
-    gap: .6rem;
-  }
-}
-.profile-info-modern-rich {
-  background: rgba(248, 252, 255, 0.96);
-  border-radius: 16px;
-  border: 1.6px solid #e3eaff;
-  box-shadow: 0 4px 24px #dde8f74d;
-  padding: 1.12rem 1.25rem 1.12rem 1.25rem;
-  margin-bottom: 1.15rem;
-  margin-top: 0.28rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.09rem;
-  font-size: 1.11rem;
-  position: relative;
-  backdrop-filter: blur(3.5px);
-  transition: box-shadow 0.22s;
-}
-
-.profile-info-modern-rich:hover {
-  box-shadow: 0 8px 32px #b7c5ec2e, 0 2px 10px #2563eb11;
-  border-color: #b7c5ec;
-}
-
-.info-row-rich {
-  display: flex;
-  align-items: center;
-  gap: 0.74rem;
-  line-height: 1.42;
-}
-
-.info-icon-circle {
-  background: linear-gradient(120deg, #e3eaff 55%, #f3f8ff 100%);
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 4px;
-  box-shadow: 0 1.5px 6px #2563eb0f;
-}
-
-.info-label-rich {
-  color: #6c81a8;
-  font-size: 1.03rem;
-  font-weight: 700;
-  min-width: 54px;
-  margin-right: 0.2em;
-  letter-spacing: 0.01em;
-}
-
-.info-value-rich {
-  color: #203050;
-  font-weight: 900;
-  font-size: 1.14rem;
-  margin-left: 0.2em;
-  letter-spacing: .01em;
-}
-.profile-change-fields-modern {
-  display: flex;
-  flex-direction: column;
-  margin-top: .22rem;
-  margin-bottom: .15rem;
-  gap: .32rem;               /* стало компактнее */
-}
-
-.input-modern {
-  font-size: 1.08rem;
-  border-radius: 10px;
-  border: 1.2px solid #e3eaff;
-  padding: 0.64rem 1.15rem;  /* стало чуть компактнее */
-  background: linear-gradient(120deg, #f9fbff 70%, #ecf3fa 100%);
-  box-shadow: 0 1.5px 8px #d9eaff10;
-  margin: 0;
-  transition: border .15s, box-shadow .18s, background .18s;
-  outline: none;
-}
-
-.input-modern:focus {
-  border: 1.4px solid #2563eb;
-  background: #f0f6ff;
-  box-shadow: 0 2px 12px #2563eb18;
-}
-
-.input-modern::placeholder {
-  color: #92a3c5;
-  font-weight: 600;
-  opacity: 1;
-  letter-spacing: 0.01em;
-  font-size: 1.03rem;
-}
-.accent-avatar {
-  background: linear-gradient(120deg, #a5b6fa 75%, #2563eb 100%);
-  box-shadow: 0 2.5px 16px #2563eb26, 0 2.5px 10px #2563eb18;
-}
-
-.user-details-compact {
-  gap: .58rem;
-  padding: 0.7rem 1.05rem 0.85rem 1.05rem;
-  border-width: 1.8px;
-}
-
-.main-name {
-  font-size: 1.35rem;
-  font-weight: 900;
-  letter-spacing: .01em;
-}
-
-.input-shadow {
-  box-shadow: 0 2px 12px #b7c5ec0d;
-  border-radius: 10px;
-}
-
-.input-modern {
-  font-size: 1.03rem;
-  padding: 0.53rem 1.05rem;
-}
-
-.profile-change-fields-modern {
-  gap: .38rem;
-}
-
-.main-btn-strong {
-  background: linear-gradient(95deg, #2563eb 70%, #4785ff 100%);
-  box-shadow: 0 3px 16px #2563eb18;
-  font-weight: 900;
-  font-size: 1.04rem;
-}
-
-.main-btn-strong:hover {
-  background: linear-gradient(93deg, #1749d4 85%, #2563eb 100%);
-  transform: scale(1.038);
-}
-
-.main-btn-ghost {
-  border: 1.6px solid #d7e4fa;
-  background: #f4f8fd;
-  color: #28385e;
-  font-weight: 700;
-  transition: background .15s, color .13s;
-}
-
-.main-btn-ghost:hover {
-  background: #e9f0ff;
-  color: #133179;
-  border-color: #b7c5ec;
-}
-
-/* Слегка уменьшить расстояния */
-.profile-modal-modern {
-  gap: 1.1rem;
-  padding-top: 2.0rem;
-  padding-bottom: 1.4rem;
-}
-
-@media (max-width: 520px) {
-  .profile-modal-modern { padding: 0.7rem 0.07rem 0.8rem 0.07rem; }
-}
-.profile-card-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Общий стиль карточки для обоих блоков */
-.profile-info-modern-rich {
-  background: #fff;
-  border-radius: 14px;
-  border: 1.5px solid #e3eaff;
-  box-shadow: 0 4px 24px #dde8f74d;
-  padding: 1.08rem 1.3rem 1.08rem 1.3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.08rem;
-}
-
-/* Дополнительная компактность для информации */
-.profile-info-compact {
-  gap: .63rem;
-  padding-bottom: .73rem;
-}
-
-.profile-password-compact {
-  margin-top: 0; /* сбросить лишний отступ */
-  gap: 0.8rem;
-  padding-top: 1rem;
-}
-
-/* Группа кнопок ниже! */
-.profile-actions-modern.buttons-bottom {
-  margin-top: 1.2rem;
-  justify-content: flex-end;
-}
-
-/* Уменьшаем контраст разделителя */
-.profile-divider {
-  display: none;
-}
-.profile-change-fields-modern.profile-fields-spaced {
-  display: flex;
-  flex-direction: column;
-  gap: 1.15rem;   /* Увеличенный отступ между инпутами */
-}
-
-.profile-actions-modern.profile-actions-outside {
-  margin-top: 2.2rem;
-  justify-content: flex-end;
-  gap: 1.1rem;
-  display: flex;
-  /* можно добавить паддинг вниз, если нужно */
-}
-
-/* Для мобильных — чтобы не улетало за пределы */
-@media (max-width: 520px) {
-  .profile-actions-modern.profile-actions-outside {
-    margin-top: 1.4rem;
-  }
-}
 
 </style>

@@ -325,6 +325,26 @@ export namespace model {
 	        this.role = source["role"];
 	    }
 	}
+	export class UserUpdate {
+	    user_id: number;
+	    username: string;
+	    full_name: string;
+	    role: string;
+	    password?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UserUpdate(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.user_id = source["user_id"];
+	        this.username = source["username"];
+	        this.full_name = source["full_name"];
+	        this.role = source["role"];
+	        this.password = source["password"];
+	    }
+	}
 	export class Warehouse {
 	    warehouse_id: number;
 	    name: string;

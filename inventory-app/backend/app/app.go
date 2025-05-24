@@ -174,6 +174,22 @@ func (a *App) LoginUser(username, password string) (*model.User, error) {
 	}
 	return user, nil
 }
+
 func (a *App) ChangePassword(login, oldPassword, newPassword string) error{
 	return auth.ChangePassword(login,oldPassword,newPassword)
 }
+
+//-----------------------Users---------------------------------\\
+
+func (a *App) GetUsers()([]model.User, error){
+	return repository.GetUsers()
+}
+
+func (a *App) RemoveUser(userId int) error{
+	return repository.RemoveUser(userId)
+}
+
+func (a *App) ChangeUserData(user model.UserUpdate) error {
+	return repository.ChangeUserData(user)
+}
+

@@ -26,6 +26,10 @@ export function ChangeStock(arg1, arg2, arg3) {
   return window['go']['app']['App']['ChangeStock'](arg1, arg2, arg3);
 }
 
+export function ChangeUserData(arg1) {
+  return window['go']['app']['App']['ChangeUserData'](arg1);
+}
+
 export function DeleteInbound(arg1) {
   return window['go']['app']['App']['DeleteInbound'](arg1);
 }
@@ -90,6 +94,10 @@ export function GetTurnoverByWarehouse() {
   return window['go']['app']['App']['GetTurnoverByWarehouse']();
 }
 
+export function GetUsers() {
+  return window['go']['app']['App']['GetUsers']();
+}
+
 export function GetWarehouses() {
   return window['go']['app']['App']['GetWarehouses']();
 }
@@ -116,6 +124,10 @@ export function RemoveStock(arg1) {
 
 export function RemoveSupplier(arg1) {
   return window['go']['app']['App']['RemoveSupplier'](arg1);
+}
+
+export function RemoveUser(arg1) {
+  return window['go']['app']['App']['RemoveUser'](arg1);
 }
 
 export function UpdateItem(arg1) {

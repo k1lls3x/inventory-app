@@ -33,19 +33,67 @@ func GetStockDetails() ([]model.ItemWithStock, error) {
 
 func GetWeeklyStockTrend() ([]model.DailyStock, error) {
 
-	query := `
-		SELECT
-			d::date AS date,
-			COALESCE(SUM(s.quantity), 0) AS total
-		FROM generate_series(
-			CURRENT_DATE - interval '6 days',
-			CURRENT_DATE,
-			interval '1 day'
-		) d
-		LEFT JOIN stock s ON date_trunc('day', s.last_updated) <= d
-		GROUP BY d
-		ORDER BY d;
-	`
+	query :=`WITH period AS (
+    SELECT
+        (CURRENT_DATE - INTERVAL '6 days')::date AS start_date,
+        CURRENT_DATE::date AS end_date
+),
+init_stock AS (
+    SELECT
+        COALESCE(SUM(quantity), 0) AS qty
+    FROM inbound
+    WHERE received_at < (SELECT start_date FROM period)
+),
+init_out AS (
+    SELECT
+        COALESCE(SUM(quantity), 0) AS qty
+    FROM outbound
+    WHERE shipped_at < (SELECT start_date FROM period)
+),
+days AS (
+    SELECT generate_series(
+        (SELECT start_date FROM period),
+        (SELECT end_date FROM period),
+        INTERVAL '1 day'
+    )::date AS d
+),
+daily_in AS (
+    SELECT received_at::date AS d, SUM(quantity) AS qty
+    FROM inbound
+    WHERE received_at >= (SELECT start_date FROM period)
+    GROUP BY received_at::date
+),
+daily_out AS (
+    SELECT shipped_at::date AS d, SUM(quantity) AS qty
+    FROM outbound
+    WHERE shipped_at >= (SELECT start_date FROM period)
+    GROUP BY shipped_at::date
+),
+accum AS (
+    SELECT
+        days.d,
+        COALESCE(di.qty, 0) AS in_qty,
+        COALESCE(dout.qty, 0) AS out_qty
+    FROM days
+    LEFT JOIN daily_in di ON di.d = days.d
+    LEFT JOIN daily_out dout ON dout.d = days.d
+),
+running_total AS (
+    SELECT
+        d,
+        SUM(in_qty) OVER (ORDER BY d) - SUM(out_qty) OVER (ORDER BY d) AS net_change
+    FROM accum
+)
+SELECT
+    a.d AS date,
+    (SELECT qty FROM init_stock) - (SELECT qty FROM init_out) + r.net_change AS total
+FROM days a
+JOIN running_total r ON a.d = r.d
+ORDER BY a.d;
+
+
+`
+
 
 	var trend []model.DailyStock
 	err := db.DB.Select(&trend, query)

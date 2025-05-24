@@ -113,3 +113,12 @@ type InboundDetails struct {
 	Quantity  int    `db:"quantity" json:"quantity"`
 	Warehouse string `db:"warehouse" json:"warehouse"`
 }
+
+
+type UserUpdate struct {
+	UserID   int    `json:"user_id"`
+	Username string `json:"username"`
+	FullName string `json:"full_name"`
+	Role     string `json:"role"`
+	Password string `json:"password,omitempty"` // ← фронт присылает только если хочет сменить пароль
+}
