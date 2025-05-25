@@ -607,6 +607,188 @@
 
 
         </section>
+        <section v-if="currentTab === 'Склады'">
+  <!-- Карточки -->
+  <div class="cards">
+    <div class="card animate-card">
+      <p class="title">Всего складов</p>
+      <p class="value">{{ warehouses.length }}</p>
+    </div>
+    <!-- Можно добавить другие карточки по необходимости -->
+  </div>
+
+  <!-- Фильтры -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>🔍 Поиск</label>
+      <input
+        type="text"
+        class="input"
+        v-model="warehouseSearch"
+        placeholder="Название или локация"
+      />
+    </div>
+    <div class="filter-group button-group">
+      <label>&nbsp;</label>
+      <button class="add-button" @click="openAddModal">➕ Добавить склад</button>
+    </div>
+  </div>
+
+  <!-- Таблица -->
+  <div class="table-section animate-table">
+    <div class="table-header">
+      <p class="title">Склады</p>
+      <!-- <button class="export-button">📤 Экспорт</button> -->
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название</th>
+          <th>Локация</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="w in filteredWarehouses" :key="w.warehouse_id">
+          <td>{{ w.warehouse_id }}</td>
+          <td>{{ w.name }}</td>
+          <td>{{ w.location }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-btn edit" @click="editWarehouse(w)">✏️</button>
+              <!-- Тут не делаем кнопку “Удалить”, т.к. удаление складов нежелательно -->
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div v-if="filteredWarehouses.length === 0" class="empty-message">
+      Нет складов по фильтру
+    </div>
+  </div>
+
+  <!-- Модалка добавления склада -->
+  <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
+    <div class="modal">
+      <h3>Добавить склад</h3>
+      <div class="form-group">
+        <label>Название склада</label>
+        <input v-model="newWarehouse.name" />
+      </div>
+      <div class="form-group">
+        <label>Локация</label>
+        <input v-model="newWarehouse.location" />
+      </div>
+      <div class="modal-actions">
+        <button @click="addWarehouse">💾 Сохранить</button>
+        <button @click="closeAddModal">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка редактирования склада -->
+  <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+    <div class="modal">
+      <h3>Редактировать склад</h3>
+      <div class="form-group">
+        <label>Название склада</label>
+        <input v-model="editWarehouseData.name" />
+      </div>
+      <div class="form-group">
+        <label>Локация</label>
+        <input v-model="editWarehouseData.location" />
+      </div>
+      <div class="modal-actions">
+        <button @click="updateWarehouse">💾 Сохранить</button>
+        <button @click="closeEditModal">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section v-if="currentTab === 'Движения'">
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>Тип движения</label>
+      <select v-model="moveType" class="input">
+        <option value="">Все</option>
+        <option value="inbound">Поступление</option>
+        <option value="outbound">Отгрузка</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>📦 Склад</label>
+      <select v-model.number="moveWarehouseId" class="input">
+        <option value="0">Все склады</option>
+        <option v-for="wh in warehouses" :key="wh.warehouse_id" :value="wh.warehouse_id">{{ wh.name }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🔍 Поиск товара</label>
+      <input v-model="moveItemSearch" placeholder="Название или SKU" class="input" />
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card animate-card">
+      <p class="title">Всего поступлений</p>
+      <p class="value">{{ inboundCount }}</p>
+    </div>
+    <div class="card animate-card">
+      <p class="title">Всего отгрузок</p>
+      <p class="value">{{ outboundCount }}</p>
+    </div>
+    <div class="card animate-card">
+      <p class="title">Общий оборот</p>
+      <p class="value">{{ totalMoved }}</p>
+    </div>
+  </div>
+
+  <div class="charts-table-wrap">
+    <div class="chart-card animate-chart">
+      <LineChart :data="moveChartData" />
+    </div>
+  </div>
+
+  <div class="table-section animate-table">
+    <div class="table-header">
+      <p class="title">Движения товаров</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Тип</th>
+          <th>Товар</th>
+          <th>Склад</th>
+          <th>Кол-во</th>
+          <th v-if="moveType === 'inbound' || !moveType">Поставщик</th>
+          <th v-if="moveType === 'outbound' || !moveType">Описание</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="m in filteredMovements" :key="m.movement_id">
+  <td>{{ formatDate(m.date) }}</td>
+  <td>{{ movementTypeName(m.type) }}</td>
+  <td>{{ m.item_name }}</td>
+  <td>{{ m.warehouse_name }}</td>
+  <td :class="{ 'positive': m.type==='inbound','negative': m.type==='outbound' }">
+    {{ m.quantity }}
+  </td>
+  <!-- всегда рендерим две ячейки в одном порядке -->
+  <td>
+    {{ m.type === 'inbound' ? (m.supplier_name || '—') : '—' }}
+  </td>
+  <td>
+    {{ m.type === 'outbound' ? (m.destination     || '—') : '—' }}
+  </td>
+</tr>
+      </tbody>
+    </table>
+    <div v-if="filteredMovements.length === 0" class="empty-message">Нет движений по фильтру</div>
+  </div>
+</section>
+
 <!-- Поставщики -->
 <section v-if="currentTab === 'Поставщики' && ['admin', 'manager'].includes(user?.role)">
 
@@ -710,6 +892,141 @@
   </div>
 </div>
 </section>
+<section v-if="currentTab === 'Отгрузки'">
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>📅 Дата</label>
+      <input type="date" v-model="outboundDateFilter" class="input" />
+    </div>
+    <div class="filter-group">
+      <label>🔍 Поиск</label>
+      <input v-model="outboundSearch" class="input" placeholder="Товар, SKU, склад, получатель" />
+    </div>
+    <div class="filter-group button-group">
+      <label>&nbsp;</label>
+      <button class="add-button" @click="openAddOutboundModal">➕ Добавить отгрузку</button>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card animate-card">
+      <p class="title">Всего отгрузок</p>
+      <p class="value">{{ outboundList.length }}</p>
+    </div>
+    <div class="card animate-card">
+      <p class="title">Суммарно отгружено</p>
+      <p class="value">{{ totalOutboundQuantity }}</p>
+    </div>
+  </div>
+
+  <div class="charts-table-wrap">
+    <div class="chart-card animate-chart">
+      <LineChart :data="outboundChartData" />
+    </div>
+  </div>
+
+  <div class="table-section animate-table">
+    <div class="table-header">
+      <p class="title">Отгрузки</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Товар</th>
+          <th>SKU</th>
+          <th>Склад</th>
+          <th>Описание</th>
+          <th>Кол-во</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="o in filteredOutboundList" :key="o.outbound_id">
+          <td>{{ formatDate(o.date) }}</td>
+          <td>{{ o.name }}</td>
+          <td>{{ o.sku }}</td>
+          <td>{{ o.warehouse }}</td>
+          <td>{{ o.destination }}</td>
+          <td class="negative">{{ o.quantity }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-btn edit" @click="openEditOutboundModal(o)">✏️</button>
+              <button class="action-btn delete" @click="deleteOutbound(o)">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div v-if="filteredOutboundList.length === 0" class="empty-message">
+      Нет отгрузок по фильтру
+    </div>
+  </div>
+
+  <!-- Модалка добавления -->
+  <div v-if="showAddOutboundModal" class="modal-overlay" @click.self="closeAddOutboundModal">
+    <div class="modal">
+      <h3>Добавить отгрузку</h3>
+      <div class="form-group"><label>Товар</label>
+        <select v-model.number="newOutbound.item_id">
+          <option disabled value="0">Выберите товар</option>
+          <option v-for="item in items" :key="item.item_id" :value="item.item_id">{{ item.name }} ({{ item.sku }})</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Склад</label>
+        <select v-model.number="newOutbound.warehouse_id">
+          <option disabled value="0">Выберите склад</option>
+          <option v-for="w in warehouses" :key="w.warehouse_id" :value="w.warehouse_id">{{ w.name }}</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Описание</label>
+        <input v-model="newOutbound.destination" />
+      </div>
+      <div class="form-group"><label>Количество</label>
+        <input type="number" min="1" v-model.number="newOutbound.quantity" />
+      </div>
+      <div class="form-group"><label>Дата отгрузки</label>
+        <input type="date" v-model="newOutbound.shipped_at" />
+      </div>
+      <div class="modal-actions">
+        <button @click="confirmAddOutbound">💾 Сохранить</button>
+        <button @click="closeAddOutboundModal">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка редактирования -->
+  <div v-if="showEditOutboundModal" class="modal-overlay" @click.self="closeEditOutboundModal">
+    <div class="modal">
+      <h3>Редактировать отгрузку</h3>
+      <div class="form-group"><label>Товар</label>
+        <select v-model.number="outboundToEdit.item_id">
+          <option disabled value="0">Выберите товар</option>
+          <option v-for="item in items" :key="item.item_id" :value="item.item_id">{{ item.name }} ({{ item.sku }})</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Склад</label>
+        <select v-model.number="outboundToEdit.warehouse_id">
+          <option disabled value="0">Выберите склад</option>
+          <option v-for="w in warehouses" :key="w.warehouse_id" :value="w.warehouse_id">{{ w.name }}</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Описание</label>
+        <input v-model="outboundToEdit.destination" />
+      </div>
+      <div class="form-group"><label>Количество</label>
+        <input type="number" min="1" v-model.number="outboundToEdit.quantity" />
+      </div>
+      <div class="form-group"><label>Дата отгрузки</label>
+        <input type="date" v-model="outboundToEdit.shipped_at" />
+      </div>
+      <div class="modal-actions">
+        <button @click="confirmEditOutbound">💾 Сохранить</button>
+        <button @click="closeEditOutboundModal">❌ Отмена</button>
+      </div>
+    </div>
+  </div>
+</section>
         <!-- Другое (заглушка) -->
         <section v-if="!tabs.includes(currentTab)">
     <p>Раздел "{{ currentTab }}" в разработке или доступ ограничен...</p>
@@ -810,7 +1127,9 @@ import { GetStockDetails } from '../wailsjs/go/app/App'
 import { RemoveStock } from '../wailsjs/go/app/App'
 import { ExportStockToExcel } from '../wailsjs/go/app/App'
 import LoginForm from './components/LoginForm.vue'
-
+import {
+  GetOutboundDetails, AddOutbound, EditOutbound, RemoveOutbound
+} from '../wailsjs/go/app/App'
 import {
   GetDashboard,
   GetTopItems,
@@ -837,6 +1156,9 @@ import {
   RegisterUser,
   RemoveUser,
   ChangeUserData,
+  AddWarehouse,EditWarehouse,
+  GetAllMovementsThisMonth
+
 } from '../wailsjs/go/app/App'
 
 const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
@@ -860,6 +1182,20 @@ const showAddUserModal = ref(false)
 const showEditUserModal = ref(false)
 const newUser = ref({ username: '', full_name: '', password: '', role: '' })
 const userToEdit = ref({})
+
+const showAddItemModal = ref(false)
+const showEditItemModal = ref(false)
+const itemToEdit = ref(null)
+// Состояния
+const outboundList = ref([])
+const showAddOutboundModal = ref(false)
+const showEditOutboundModal = ref(false)
+const outboundToEdit = ref({})
+const outboundSearch = ref('')
+const outboundDateFilter = ref('')
+const newOutbound = ref({
+  item_id: 0, warehouse_id: 0, destination: '', quantity: 1, shipped_at: ''
+})
 
 const filteredUsers = computed(() =>
   users.value.filter(u =>
@@ -922,6 +1258,75 @@ async function confirmEditUser() {
     alert('Ошибка при обновлении пользователя: ' + (e?.message || ''))
   }
 }
+const movements = ref([])
+const moveType = ref("")
+const moveWarehouseId = ref(0)
+const moveItemSearch = ref("")
+
+// График - динамика по дням (поступления и отгрузки)
+const moveChartData = computed(() => {
+  // Группируем движения по дате, считаем поступления/отгрузки отдельно
+  const byDate = {}
+  for (const m of movements.value) {
+    const date = (new Date(m.date)).toISOString().slice(0, 10)
+    if (!byDate[date]) byDate[date] = { in: 0, out: 0 }
+    if (m.type === 'inbound') byDate[date].in += m.quantity
+    if (m.type === 'outbound') byDate[date].out += m.quantity
+  }
+  const dates = Object.keys(byDate).sort()
+  return {
+    labels: dates.map(d => d.split('-').reverse().join('.')),
+    datasets: [
+      {
+        label: "Поступления",
+        data: dates.map(d => byDate[d].in),
+        borderColor: "#22c55e",
+        backgroundColor: "rgba(34,197,94,0.1)",
+        tension: 0.3
+      },
+      {
+        label: "Отгрузки",
+        data: dates.map(d => byDate[d].out),
+        borderColor: "#ef4444",
+        backgroundColor: "rgba(239,68,68,0.1)",
+        tension: 0.3
+      }
+    ]
+  }
+})
+
+const filteredMovements = computed(() =>
+  movements.value.filter(m => {
+    const wid = Number(moveWarehouseId.value)  // ← здесь
+    return (!moveType.value || m.type === moveType.value)
+        && (wid === 0 || m.warehouse_id === wid)
+        && (
+            m.item_name.toLowerCase().includes(moveItemSearch.value.toLowerCase()) ||
+            m.item_id.toString().includes(moveItemSearch.value.toLowerCase())
+        )
+  })
+)
+
+
+const inboundCount  = computed(() =>
+  filteredMovements.value.filter(m => m.type === 'inbound').length
+)
+
+const outboundCount = computed(() =>
+  filteredMovements.value.filter(m => m.type === 'outbound').length)
+const totalMoved = computed(() => movements.value.reduce((acc, m) => acc + m.quantity, 0))
+
+function movementTypeName(t) {
+  if (t === 'inbound') return 'Поступление'
+  if (t === 'outbound') return 'Отгрузка'
+  return t
+}
+
+
+async function reloadMovements() {
+  // Можно сюда добавить аргументы фильтров, если делаешь серверный фильтр
+  movements.value = await GetAllMovementsThisMonth() || []
+}
 
 async function deleteUser(u) {
   if (!confirm(`Удалить пользователя "${u.username}"?`)) return
@@ -975,6 +1380,7 @@ const tabs = computed(() => {
       'Дашборд',
       'Остатки',
       'Поставки',
+      'Отгрузки',
       'Товары',
       'Склады',
       'Поставщики',
@@ -988,6 +1394,7 @@ const tabs = computed(() => {
       'Дашборд',
       'Остатки',
       'Поставки',
+      'Отгрузки',
       'Товары',
       'Склады',
       'Поставщики',
@@ -999,6 +1406,7 @@ const tabs = computed(() => {
     'Дашборд',
     'Остатки',
     'Поставки',
+    'Отгрузки',
     'Движения'
   ];
 });
@@ -1048,9 +1456,11 @@ const newInbound = ref({
   quantity: 1,
   received_at: "",
 })
-const suppliers = ref([
-  { supplier_id: 1, name: "Тестовый поставщик", inn: "111222333", contact_person: "Иванов", phone: "123", email: "test@test.ru" }
-])
+const suppliers = ref([])
+ // если вкладки реализованы через состояние, замени на свой способ
+const warehouseSearch = ref('')
+const newWarehouse = ref({ name: '', location: '' })
+const editWarehouseData = ref({ warehouse_id: null, name: '', location: '' })
 const supplierSearch = ref('');
 const filteredSuppliers = computed(() =>
   suppliers.value.filter(s =>
@@ -1062,6 +1472,11 @@ const showAddSupplierModal = ref(false);
 const showEditSupplierModal = ref(false);
 const newSupplier = ref({ name: '', inn: '', contact_person: '', phone: '', email: '' });
 const supplierToEdit = ref({});
+
+async function loadWarehouses() {
+  warehouses.value = await GetWarehouses() || []
+}
+
 
 function openAddSupplierModal() { showAddSupplierModal.value = true }
 async function confirmAddSupplier() {
@@ -1223,8 +1638,39 @@ function closeAddDeliveryModal() {
     received_at: "",
   }
 }
+const outboundChartData = computed(() => {
+  const byDate = {}
+  for (const o of outboundList.value) {
+    const date = (new Date(o.date)).toISOString().slice(0, 10)
+    byDate[date] = (byDate[date] || 0) + o.quantity
+  }
+  const dates = Object.keys(byDate).sort()
+  return {
+    labels: dates.map(d => d.split('-').reverse().join('.')),
+    datasets: [{
+      label: "Отгрузки",
+      data: dates.map(d => byDate[d]),
+      borderColor: "#ef4444",
+      backgroundColor: "rgba(239,68,68,0.15)",
+      tension: 0.3
+    }]
+  }
+})
 
-// Эту функцию вызывай при сохранении поставки
+const filteredOutboundList = computed(() =>
+  (outboundList.value || []).filter(o =>
+    (!outboundDateFilter.value || (o.date || '').startsWith(outboundDateFilter.value)) &&
+    (
+      (o.name || '').toLowerCase().includes(outboundSearch.value.toLowerCase()) ||
+      (o.sku || '').toLowerCase().includes(outboundSearch.value.toLowerCase()) ||
+      (o.warehouse || '').toLowerCase().includes(outboundSearch.value.toLowerCase()) ||
+      (o.destination || '').toLowerCase().includes(outboundSearch.value.toLowerCase())
+    )
+  )
+)
+
+
+const totalOutboundQuantity = computed(() => (outboundList.value || []).reduce((acc, o) => acc + o.quantity, 0))// Эту функцию вызывай при сохранении поставки
 function confirmAddDelivery() {
   // Простая валидация
   if (
@@ -1260,7 +1706,82 @@ function confirmAddDelivery() {
     console.error(err)
   })
 }
+async function reloadOutbound() {
+  const data = await GetOutboundDetails();
+  outboundList.value = Array.isArray(data) ? data : [];
+}
 
+
+watch(outboundDateFilter, reloadOutbound)
+
+// Добавление
+function openAddOutboundModal() {
+  showAddOutboundModal.value = true
+  newOutbound.value = { item_id: 0, warehouse_id: 0, destination: '', quantity: 1, shipped_at: '' }
+}
+function closeAddOutboundModal() { showAddOutboundModal.value = false }
+async function confirmAddOutbound() {
+  if (!newOutbound.value.item_id || !newOutbound.value.warehouse_id || !newOutbound.value.destination || !newOutbound.value.quantity) {
+    alert('Заполните все поля')
+    return
+  }
+  try {
+    await AddOutbound(
+  newOutbound.value.item_id,
+  newOutbound.value.quantity,
+  newOutbound.value.shipped_at,   // строка YYYY-MM-DD
+  newOutbound.value.destination,
+  newOutbound.value.warehouse_id
+)
+    closeAddOutboundModal()
+    await  reloadOutbound()
+    await reloadMovements()
+  } catch (e) {
+    alert('Ошибка при добавлении: ' + (e?.message || ''))
+  }
+}
+
+// Редактирование
+function openEditOutboundModal(o) {
+  outboundToEdit.value = { ...o }
+  showEditOutboundModal.value = true
+}
+function closeEditOutboundModal() { showEditOutboundModal.value = false }
+async function confirmEditOutbound() {
+  // в вашем outboundToEdit.value уже есть все поля:
+  const o = outboundToEdit.value;
+
+  // валидация...
+  try {
+    // передаём 6 отдельных параметров в том же порядке,
+    // в каком вы объявили метод в app.go
+    await EditOutbound(
+      o.item_id,         // 1) itemID
+      o.quantity,        // 2) quantity
+      o.shipped_at,      // 3) shippedAtStr (YYYY-MM-DD)
+      o.destination,     // 4) destination
+      o.warehouse_id,    // 5) warehouseID
+      o.outbound_id      // 6) outboundID
+    );
+
+    closeEditOutboundModal();
+    await reloadOutbound();
+    await reloadMovements();
+  } catch (e) {
+    alert('Ошибка при сохранении: ' + e?.message);
+  }
+}
+
+// Удаление
+async function deleteOutbound(o) {
+  if (!confirm(`Удалить отгрузку товара "${o.name}"?`)) return
+  try {
+    await RemoveOutbound(o.outbound_id)
+    reloadOutbound()
+  } catch (e) {
+    alert('Ошибка при удалении: ' + (e?.message || ''))
+  }
+}
 const weeklyStockChartData = computed(() => ({
   labels: weeklyStockData.value.map(d => formatDate(d.date)),
   datasets: [
@@ -1585,9 +2106,6 @@ function confirmAddStock() {
     console.error(err)
   })
 }
-const showAddItemModal = ref(false)
-const showEditItemModal = ref(false)
-const itemToEdit = ref(null)
 
 const newItem = ref({
   sku: "",
@@ -1600,6 +2118,7 @@ const newItem = ref({
   cost: 0,
   category: ""
 })
+
 function openAddItemModal() {
   Object.assign(newItem.value, {
     sku: "",
@@ -1619,6 +2138,7 @@ function openEditItemModal(item) {
   itemToEdit.value = { ...item }
   showEditItemModal.value = true
 }
+
 async function confirmAddItem() {
   // простая валидация
   if (!newItem.value.sku || !newItem.value.name) {
@@ -1651,7 +2171,6 @@ async function confirmEditItem() {
     alert('Ошибка при обновлении: ' + (e?.message || ''))
   }
 }
-~
 
 async function deleteItem(item) {
   if (!confirm(`Удалить товар "${item.name}"?`)) return
@@ -1667,6 +2186,33 @@ function closeEditModal() {
   showEditModal.value = false
   stockToEdit.value = null
 }
+
+async function addWarehouse() {
+  if (!newWarehouse.value.name.trim()) return
+  await AddWarehouse(newWarehouse.value)
+  await loadWarehouses()
+  closeAddModal()
+}
+
+async function updateWarehouse() {
+  if (!editWarehouseData.value.name.trim()) return
+  await EditWarehouse(editWarehouseData.value)
+  await loadWarehouses()
+  closeEditModal()
+}
+
+function editWarehouse(w) {
+  editWarehouseData.value = { ...w }
+  showEditModal.value = true
+}
+
+const filteredWarehouses = computed(() =>
+  warehouses.value.filter(w =>
+    w.name.toLowerCase().includes(warehouseSearch.value.toLowerCase()) ||
+    (w.location || '').toLowerCase().includes(warehouseSearch.value.toLowerCase())
+  )
+)
+
 
 onMounted(async () => {
   if (loggedIn.value && !user.value) {
@@ -1702,6 +2248,9 @@ onMounted(async () => {
       quantity: s.quantity
     }))
   })
+
+  await reloadMovements()
+  await reloadOutbound()
   GetInboundDetails().then(data => {
     deliveriesList.value = data || [];
   }).catch(err => {
@@ -1711,7 +2260,7 @@ onMounted(async () => {
   GetWarehouses().then(data => warehouses.value.push(...data))
   GetTurnoverByWarehouse().then(data => turnoverData.value = data)
 })
-
+watch([moveType, moveWarehouseId], reloadMovements)
 watch(currentTab, async (tab) => {
   if (tab === 'Дашборд') {
     const data = await GetDashboard()
@@ -1719,7 +2268,10 @@ watch(currentTab, async (tab) => {
     itemCount.value = data.item_count
     monthlyOrders.value = data.monthly_orders
     newItems.value = data.new_items
-
+    if (tab === 'Движения') {
+    await reloadMovements()
+    await reloadOutbound()
+  }
     topItems.value = await GetTopItems() || []
     turnoverData.value = await GetTurnoverByWarehouse() || []
   }

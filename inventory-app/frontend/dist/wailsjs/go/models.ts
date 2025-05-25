@@ -246,6 +246,84 @@ export namespace model {
 	    }
 	}
 	
+	export class Movement {
+	    type: string;
+	    movement_id: number;
+	    item_id: number;
+	    item_name: string;
+	    quantity: number;
+	    // Go type: time
+	    date: any;
+	    warehouse_id: number;
+	    warehouse_name: string;
+	    supplier_id?: number;
+	    supplier_name?: string;
+	    destination?: string;
+	    // Go type: time
+	    shipped_at?: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new Movement(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.movement_id = source["movement_id"];
+	        this.item_id = source["item_id"];
+	        this.item_name = source["item_name"];
+	        this.quantity = source["quantity"];
+	        this.date = this.convertValues(source["date"], null);
+	        this.warehouse_id = source["warehouse_id"];
+	        this.warehouse_name = source["warehouse_name"];
+	        this.supplier_id = source["supplier_id"];
+	        this.supplier_name = source["supplier_name"];
+	        this.destination = source["destination"];
+	        this.shipped_at = this.convertValues(source["shipped_at"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class OutboundDetails {
+	    outbound_id: number;
+	    date: string;
+	    name: string;
+	    sku: string;
+	    destination: string;
+	    quantity: number;
+	    warehouse: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OutboundDetails(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.outbound_id = source["outbound_id"];
+	        this.date = source["date"];
+	        this.name = source["name"];
+	        this.sku = source["sku"];
+	        this.destination = source["destination"];
+	        this.quantity = source["quantity"];
+	        this.warehouse = source["warehouse"];
+	    }
+	}
 	export class Stock {
 	    stock_id: number;
 	    item_id: number;

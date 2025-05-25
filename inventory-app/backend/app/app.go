@@ -12,6 +12,8 @@ import (
 	"os"
 	"inventory-app/backend/auth"
 	"errors"
+	"time"
+	"fmt"
 )
 
 // App struct
@@ -120,6 +122,14 @@ func (a *App) FindItems(filter model.ItemFilter) ([]model.Item, error) {
 func (a *App) GetWarehouses() ([]model.Warehouse, error) {
 	return repository.GetWarehouses()
 }
+
+func (a *App) AddWarehouse(warehouse model.Warehouse) error {
+	return repository.AddWarehouse(warehouse)
+}
+
+func (a *App) EditWarehouse(warehouse model.Warehouse) error {
+	return repository.EditWarehouse(warehouse)
+}
 //-----------------------Indbound---------------------------------\\
 
 func (a *App) GetInboundDetails()([]model.InboundDetails,error){
@@ -193,3 +203,59 @@ func (a *App) ChangeUserData(user model.UserUpdate) error {
 	return repository.ChangeUserData(user)
 }
 
+//-----------------------Movements---------------------------------\\
+func (a *App) GetAllMovementsThisMonth() ([]model.Movement, error){
+	return repository.GetAllMovementsThisMonth()
+}
+
+//-----------------------Outbound---------------------------------\\
+func (a *App) GetOutboundDetails() ([]model.OutboundDetails, error) {
+	return repository.GetOutboundDetails()
+}
+
+func (a *App) AddOutbound(itemID int, quantity int, shippedAtStr string, destination string, warehouseID int) error {
+	var shippedAt time.Time
+	var err error
+	if shippedAtStr != "" {
+			shippedAt, err = time.Parse("2006-01-02", shippedAtStr)
+			if err != nil {
+					return fmt.Errorf("invalid date format, expected YYYY-MM-DD: %w", err)
+			}
+	}
+	return repository.AddOutbound(model.Outbound{
+			ItemID:      itemID,
+			Quantity:    quantity,
+			ShippedAt:   shippedAt,
+			Destination: &destination,
+			WarehouseID: warehouseID,
+	})
+}
+
+func (a *App) EditOutbound(
+	itemID      int,
+	quantity    int,
+	shippedAtStr string,
+	destination string,
+	warehouseID int,
+	outboundID  int,
+) error {
+	var shippedAt time.Time
+	var err error
+	if shippedAtStr != "" {
+			shippedAt, err = time.Parse("2006-01-02", shippedAtStr)
+			if err != nil {
+					return fmt.Errorf("invalid date %q, expected YYYY-MM-DD: %w", shippedAtStr, err)
+			}
+	}
+	return repository.EditOutbound(model.Outbound{
+			OutboundID:  outboundID,
+			ItemID:      itemID,
+			Quantity:    quantity,
+			ShippedAt:   shippedAt,
+			Destination: &destination,  
+			WarehouseID: warehouseID,
+	})
+}
+func (a *App) RemoveOutbound(outboundId int) error {
+	return repository.DeleteOutbound(outboundId)
+}

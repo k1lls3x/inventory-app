@@ -75,6 +75,22 @@ type ItemTurnoverByWarehouse struct {
 	Shipped   int    `db:"shipped" json:"shipped"`
 }
 
+type Movement struct {
+	Type          string     `db:"type"            json:"type"`
+	MovementID    int        `db:"movement_id"     json:"movement_id"`
+	ItemID        int        `db:"item_id"         json:"item_id"`
+	ItemName      string     `db:"item_name"       json:"item_name"`
+	Quantity      int        `db:"quantity"        json:"quantity"`
+	Date          time.Time  `db:"date"            json:"date"`
+	WarehouseID   int        `db:"warehouse_id"    json:"warehouse_id"`
+	WarehouseName string     `db:"warehouse_name"  json:"warehouse_name"`
+	SupplierID    *int       `db:"supplier_id"     json:"supplier_id,omitempty"`
+	SupplierName  *string    `db:"supplier_name"   json:"supplier_name,omitempty"`
+	Destination   *string    `db:"destination"     json:"destination,omitempty"`
+	ShippedAt     *time.Time `db:"shipped_at"      json:"shipped_at,omitempty"`
+}
+
+
 type ItemWithStock struct {
 	StockID     int    `json:"stock_id" db:"stock_id"`
 	ItemID      int    `json:"item_id" db:"item_id"`
@@ -121,4 +137,14 @@ type UserUpdate struct {
 	FullName string `json:"full_name"`
 	Role     string `json:"role"`
 	Password string `json:"password,omitempty"` // ← фронт присылает только если хочет сменить пароль
+}
+
+type OutboundDetails struct {
+	OutboundID  int    `db:"outbound_id" json:"outbound_id"`
+	Date        string `db:"date" json:"date"`
+	Name        string `db:"name" json:"name"`
+	Sku         string `db:"sku" json:"sku"`
+	Destination string `db:"destination" json:"destination"`
+	Quantity    int    `db:"quantity" json:"quantity"`
+	Warehouse   string `db:"warehouse" json:"warehouse"`
 }

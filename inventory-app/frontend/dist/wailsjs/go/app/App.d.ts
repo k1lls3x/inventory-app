@@ -7,9 +7,13 @@ export function AddInbound(arg1:model.Inbound):Promise<void>;
 
 export function AddItem(arg1:model.Item):Promise<void>;
 
+export function AddOutbound(arg1:number,arg2:number,arg3:string,arg4:string,arg5:number):Promise<void>;
+
 export function AddStock(arg1:number,arg2:number,arg3:number):Promise<void>;
 
 export function AddSupplier(arg1:model.Supplier):Promise<void>;
+
+export function AddWarehouse(arg1:model.Warehouse):Promise<void>;
 
 export function ChangePassword(arg1:string,arg2:string,arg3:string):Promise<void>;
 
@@ -21,7 +25,11 @@ export function DeleteInbound(arg1:number):Promise<void>;
 
 export function EditInbound(arg1:model.Inbound):Promise<void>;
 
+export function EditOutbound(arg1:number,arg2:number,arg3:string,arg4:string,arg5:number,arg6:number):Promise<void>;
+
 export function EditSupplier(arg1:model.Supplier):Promise<void>;
+
+export function EditWarehouse(arg1:model.Warehouse):Promise<void>;
 
 export function ExportStockToExcel():Promise<string>;
 
@@ -31,6 +39,8 @@ export function FindStockByWarehouse(arg1:number):Promise<Array<model.ItemWithSt
 
 export function GetAllItems():Promise<Array<model.ItemBrief>>;
 
+export function GetAllMovementsThisMonth():Promise<Array<model.Movement>>;
+
 export function GetDashboard():Promise<dashboard.DashboardData>;
 
 export function GetInboundDetails():Promise<Array<model.InboundDetails>>;
@@ -38,6 +48,8 @@ export function GetInboundDetails():Promise<Array<model.InboundDetails>>;
 export function GetInboundDetailsByDate(arg1:string):Promise<Array<model.InboundDetails>>;
 
 export function GetItems():Promise<Array<model.Item>>;
+
+export function GetOutboundDetails():Promise<Array<model.OutboundDetails>>;
 
 export function GetStockDetails():Promise<Array<model.ItemWithStock>>;
 
@@ -60,6 +72,8 @@ export function LoginUser(arg1:string,arg2:string):Promise<model.User>;
 export function RegisterUser(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 
 export function RemoveItem(arg1:string):Promise<void>;
+
+export function RemoveOutbound(arg1:number):Promise<void>;
 
 export function RemoveStock(arg1:number):Promise<void>;
 

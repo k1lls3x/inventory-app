@@ -10,12 +10,20 @@ export function AddItem(arg1) {
   return window['go']['app']['App']['AddItem'](arg1);
 }
 
+export function AddOutbound(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['app']['App']['AddOutbound'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function AddStock(arg1, arg2, arg3) {
   return window['go']['app']['App']['AddStock'](arg1, arg2, arg3);
 }
 
 export function AddSupplier(arg1) {
   return window['go']['app']['App']['AddSupplier'](arg1);
+}
+
+export function AddWarehouse(arg1) {
+  return window['go']['app']['App']['AddWarehouse'](arg1);
 }
 
 export function ChangePassword(arg1, arg2, arg3) {
@@ -38,8 +46,16 @@ export function EditInbound(arg1) {
   return window['go']['app']['App']['EditInbound'](arg1);
 }
 
+export function EditOutbound(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['app']['App']['EditOutbound'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
 export function EditSupplier(arg1) {
   return window['go']['app']['App']['EditSupplier'](arg1);
+}
+
+export function EditWarehouse(arg1) {
+  return window['go']['app']['App']['EditWarehouse'](arg1);
 }
 
 export function ExportStockToExcel() {
@@ -58,6 +74,10 @@ export function GetAllItems() {
   return window['go']['app']['App']['GetAllItems']();
 }
 
+export function GetAllMovementsThisMonth() {
+  return window['go']['app']['App']['GetAllMovementsThisMonth']();
+}
+
 export function GetDashboard() {
   return window['go']['app']['App']['GetDashboard']();
 }
@@ -72,6 +92,10 @@ export function GetInboundDetailsByDate(arg1) {
 
 export function GetItems() {
   return window['go']['app']['App']['GetItems']();
+}
+
+export function GetOutboundDetails() {
+  return window['go']['app']['App']['GetOutboundDetails']();
 }
 
 export function GetStockDetails() {
@@ -116,6 +140,10 @@ export function RegisterUser(arg1, arg2, arg3, arg4) {
 
 export function RemoveItem(arg1) {
   return window['go']['app']['App']['RemoveItem'](arg1);
+}
+
+export function RemoveOutbound(arg1) {
+  return window['go']['app']['App']['RemoveOutbound'](arg1);
 }
 
 export function RemoveStock(arg1) {
