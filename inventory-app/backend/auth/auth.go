@@ -30,8 +30,8 @@ func ChangePassword(login, oldPassword, newPassword string) error {
 
 	newPasswordHash, err := HashPassword(newPassword)
 	query := `
-		UPDATE "User" SET password = $1 WHERE username = $2
-	`
+    UPDATE "User" SET password_hash = $1 WHERE username = $2
+`
 	_, err = db.DB.Exec(query, newPasswordHash, login)
 	if err != nil {
 		log.Println("❌ Произошла ошибка при смене пароля: ", err)
@@ -44,10 +44,10 @@ func ChangePassword(login, oldPassword, newPassword string) error {
 func GetUserByUsername(username string) (*model.User, error) {
 	var user model.User
 	query := `
-		SELECT user_id, username, password AS password_hash, role, full_name
-		FROM "User"
-		WHERE username = $1
-	`
+	SELECT user_id, username, password_hash, role, full_name
+	FROM "User"
+	WHERE username = $1
+`
 	err := db.DB.Get(&user, query, username)
 	if err != nil {
 		log.Println("❌ Произошла ошибка при получении пользователя", err)
@@ -62,7 +62,7 @@ func Register(user *model.User, rawPassword string) error {
 		return err
 	}
 	_, err = db.DB.Exec(`
-		INSERT INTO "User"(username, password, role, full_name) VALUES ($1, $2, $3, $4)`,
+		INSERT INTO "User"(username, password_hash, role, full_name) VALUES ($1, $2, $3, $4)`,
 		user.Username, hash, user.Role, user.FullName,
 	)
 	return err

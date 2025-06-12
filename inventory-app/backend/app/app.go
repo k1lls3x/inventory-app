@@ -5,9 +5,10 @@ import (
 	"inventory-app/backend/internal/db"
 	"inventory-app/backend/internal/handler/dashboard"
 	"inventory-app/backend/internal/handler/export"
-	"inventory-app/backend/logs"
+
 	"inventory-app/backend/internal/model"
 	"inventory-app/backend/internal/repository"
+
 	"log"
 	"os"
 	"inventory-app/backend/auth"
@@ -44,12 +45,9 @@ func (a *App) Startup(ctx context.Context) {
 
     a.ctx = ctx
 
-    log.Println("Startup: инициализация логирования")
-  	logs.Init()
-
     log.Println("Startup: инициализация базы данных")
     db.Init()
-
+		log.Println("Startup: инициализация бота")
     log.Println("Startup: завершён")
 
 }
@@ -252,7 +250,7 @@ func (a *App) EditOutbound(
 			ItemID:      itemID,
 			Quantity:    quantity,
 			ShippedAt:   shippedAt,
-			Destination: &destination,  
+			Destination: &destination,
 			WarehouseID: warehouseID,
 	})
 }
