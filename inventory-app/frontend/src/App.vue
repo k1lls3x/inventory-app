@@ -343,10 +343,19 @@
                 <label for="inbound-item">Товар</label>
                 <select v-model.number="newInbound.item_id" id="inbound-item">
                   <option disabled value="0">Выберите товар</option>
+                  <option value="-1">➕ Новый товар...</option>
                   <option v-for="item in items" :key="item.item_id" :value="item.item_id">
                     {{ item.name }} ({{ item.sku }})
                   </option>
                 </select>
+                <div v-if="newInbound.item_id === -1" class="new-item-fields">
+                  <input class="input" placeholder="SKU" v-model="newInboundItem.sku" />
+                  <input class="input" placeholder="Наименование" v-model="newInboundItem.name" />
+                  <input class="input" placeholder="Описание" v-model="newInboundItem.description" />
+                  <input class="input" placeholder="Ед. изм." v-model="newInboundItem.uom" />
+                  <input class="input" type="number" placeholder="Цена" v-model.number="newInboundItem.price" />
+                  <input class="input" type="number" placeholder="Себестоимость" v-model.number="newInboundItem.cost" />
+                </div>
               </div>
               <div class="form-group">
                 <label for="inbound-supplier">Поставщик</label>
@@ -1141,6 +1150,7 @@ import {
   GetInboundDetails,
   GetInboundDetailsByDate,
   AddInbound,
+  AddInboundTx,
   GetSuppliers,
   DeleteInbound,
   EditInbound,
@@ -1488,6 +1498,14 @@ const newInbound = ref({
   quantity: 1,
   received_at: "",
 })
+const newInboundItem = ref({
+  sku: '',
+  name: '',
+  description: '',
+  uom: '',
+  price: 0,
+  cost: 0,
+})
 const suppliers = ref([])
  // если вкладки реализованы через состояние, замени на свой способ
 const warehouseSearch = ref('')
@@ -1590,6 +1608,8 @@ function exportToExcel() {
 
 function openAddDeliveryModal() {
   showAddDeliveryModal.value = true
+  newInbound.value = { item_id: 0, supplier_id: 0, warehouse_id: 0, quantity: 1, received_at: '' }
+  Object.assign(newInboundItem.value, { sku: '', name: '', description: '', uom: '', price: 0, cost: 0 })
 }
 
 const averagePrice = computed(() => {
@@ -1669,6 +1689,7 @@ function closeAddDeliveryModal() {
     quantity: 1,
     received_at: "",
   }
+  Object.assign(newInboundItem.value, { sku: '', name: '', description: '', uom: '', price: 0, cost: 0 })
 }
 const outboundChartData = computed(() => {
   const byDate = {}
@@ -1718,25 +1739,58 @@ function confirmAddDelivery() {
   const receivedAt = newInbound.value.received_at
   ? new Date(newInbound.value.received_at).toISOString()
   : undefined;
-  // Если дата не выбрана, на бэке ставится now()
-  const payload = {
-    item_id: newInbound.value.item_id,
-    supplier_id: newInbound.value.supplier_id,
-    warehouse_id: newInbound.value.warehouse_id,
-    quantity: newInbound.value.quantity,
-    received_at: receivedAt,
-  received_by: 1 // <-- id текущего пользователя, если есть логин; пока хардкод
-  }
-  window.go.app.App.AddInbound(payload).then(() => {
-    closeAddDeliveryModal()
-    // обновить deliveriesList после добавления
-    GetInboundDetails().then(data => {
-      deliveriesList.value = data || []
+  // Если выбран новый товар
+  if (newInbound.value.item_id === -1) {
+    if (!newInboundItem.value.sku || !newInboundItem.value.name) {
+      alert('Введите SKU и наименование товара');
+      return;
+    }
+    const inboundPayload = {
+      item_id: 0,
+      supplier_id: newInbound.value.supplier_id,
+      warehouse_id: newInbound.value.warehouse_id,
+      quantity: newInbound.value.quantity,
+      received_at: receivedAt,
+    }
+    const itemPayload = {
+      sku: newInboundItem.value.sku,
+      name: newInboundItem.value.name,
+      description: newInboundItem.value.description,
+      uom: newInboundItem.value.uom || 'шт',
+      reorder_level: 0,
+      reorder_qty: 0,
+      price: newInboundItem.value.price,
+      cost: newInboundItem.value.cost,
+    }
+    window.go.app.App.AddInboundTx(inboundPayload, itemPayload).then(() => {
+      closeAddDeliveryModal()
+      GetInboundDetails().then(data => { deliveriesList.value = data || [] })
+      GetItems().then(data => { items.value = data || [] })
+    }).catch(err => {
+      alert('Ошибка при добавлении поставки')
+      console.error(err)
     })
-  }).catch(err => {
-    alert("Ошибка при добавлении поставки")
-    console.error(err)
-  })
+  } else {
+    // Если дата не выбрана, на бэке ставится now()
+    const payload = {
+      item_id: newInbound.value.item_id,
+      supplier_id: newInbound.value.supplier_id,
+      warehouse_id: newInbound.value.warehouse_id,
+      quantity: newInbound.value.quantity,
+      received_at: receivedAt,
+      received_by: 1
+    }
+    window.go.app.App.AddInbound(payload).then(() => {
+      closeAddDeliveryModal()
+      // обновить deliveriesList после добавления
+      GetInboundDetails().then(data => {
+        deliveriesList.value = data || []
+      })
+    }).catch(err => {
+      alert("Ошибка при добавлении поставки")
+      console.error(err)
+    })
+  }
 }
 async function reloadOutbound() {
   const data = await GetOutboundDetails();
