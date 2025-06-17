@@ -1,19 +1,38 @@
-# README
+<h1 align="center"> :clipboard: Inventory App :clipboard: </h1>
 
-## About
+<!-- BADGES -->
+</br>
+<p align="center">
+  <img src="https://img.shields.io/github/languages/count/Zproger/bspwm-dotfiles?style=for-the-badge">
+  <img src="https://img.shields.io/github/repo-size/Zproger/bspwm-dotfiles?style=for-the-badge">
+</p>
 
-This is the official Wails Vanilla template.
+<!-- INFORMATION -->
+<h1 align="left"> :blue_book: About</h1>
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+<img src="screenshots/main.png" alt="main" align="right" width="500px">
 
-## Live Development
+</br>
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+- Desktop inventory system powered by [**Wails**](https://wails.io/) and Vue.
+- Manage items, warehouses, suppliers and deliveries.
+- Track stock levels and movements with interactive charts.
+- Role based authentication and user management.
+- Export data tables to **Excel** reports.
+- Stores data in PostgreSQL.
 
-## Building
+<!-- IMAGES -->
+## 🖼️ Gallery
+Place additional screenshots in the `screenshots/` folder and they will appear here:
+![gallery1](screenshots/1.png)
+![gallery2](screenshots/2.png)
 
-To build a redistributable, production mode package, use `wails build`.
+<!-- INSTALLATION -->
+## :blue_book: Installation
+1. Install Go and Node.js.
+2. Inside `frontend` run `npm install`.
+3. Build the application with `wails build`.
+
+<!-- CONTRIBUTING -->
+## :moyai: Contributing
+Feel free to open issues or pull requests.
