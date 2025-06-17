@@ -2,3 +2,4 @@
 build/
 backend/cmd
 inventory-app/logs.txt
+*.exe
