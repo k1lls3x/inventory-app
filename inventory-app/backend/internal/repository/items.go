@@ -1,34 +1,59 @@
 package repository
 
 import (
-	"inventory-app/backend/internal/db"
 	"inventory-app/backend/internal/model"
-	"log"
+	"context"
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
+  "database/sql"
 )
-
-func GetItems() ([]model.Item, error) {
-	var items []model.Item
-	query:= `SELECT * FROM Item ORDER BY name`
-	err := db.DB.Select(&items,query)
-		if err != nil {
-			return nil,err
-		}
-	return items, err
+type ItemRepository interface {
+	GetItems(ctx context.Context) ([]model.Item, error)
+	AddItem(ctx context.Context, item model.Item) error
+	AddItemTx(ctx context.Context, tx *sqlx.Tx,item model.Item) error
+	UpdateItem(ctx context.Context, item model.Item) error
+	RemoveItem(ctx context.Context, sku string) error
+	FindItems(ctx context.Context, filter model.ItemFilter) ([]model.Item, error)
+	GetItemBriefList(ctx context.Context) ([]model.ItemBrief, error)
+	ItemExistsTx(ctx context.Context, tx *sqlx.Tx, sku string) (bool, error)
 }
 
-func GetItemBriefList() ([]model.ItemBrief, error) {
+type PgItemRepository struct {
+	db *sqlx.DB
+	log zerolog.Logger
+}
+
+func NewPgItemRepository(db *sqlx.DB, logger zerolog.Logger) *PgItemRepository{
+	return &PgItemRepository{db: db, log : logger}
+}
+
+func (r *PgItemRepository) GetItems(ctx context.Context) ([]model.Item, error) {
+  var items []model.Item
+    query := `SELECT * FROM item ORDER BY name`
+    err := r.db.SelectContext(ctx, &items, query)
+    if err != nil {
+        r.log.Error().Err(err).Msg("Ошибка получения товаров")
+        return nil, err
+    }
+    r.log.Info().Int("count", len(items)).Msg("Товары успешно получены")
+    return items, nil
+}
+
+func (r *PgItemRepository) GetItemBriefList(ctx context.Context) ([]model.ItemBrief, error) {
 	var items []model.ItemBrief
 	query := `SELECT item_id, name, sku FROM item ORDER BY name`
-	err := db.DB.Select(&items, query)
+	err := r.db.SelectContext(ctx, &items, query)
 	if err != nil {
+		r.log.Error().Err(err).Msg("Ошибка получения товаров")
 		return nil, err
 	}
+	r.log.Info().Int("count", len(items)).Msg("Товары успешно получены")
 	return items, nil
 }
 
- func UpdateItem(item model.Item) error  {
+ func (r *PgItemRepository) UpdateItem(ctx context.Context,item model.Item) error  {
 	query := `
-		UPDATE Item
+		UPDATE item
 			SET
 				sku = :sku,
 				name = :name,
@@ -40,64 +65,101 @@ func GetItemBriefList() ([]model.ItemBrief, error) {
 				cost = :cost
 			WHERE item_id = :item_id
 	`
-	_, err := db.DB.NamedExec(query,item)
+	_, err := r.db.NamedExecContext(ctx,query,item)
 		if err != nil {
-			log.Println("❌ Произошла ошибка при обновлении товара: ", err)
+			r.log.Error().Err(err).Str("sku", item.SKU).Msg("Ошибка при обновлении товара")
+			return err
 		}
-		return err
+		r.log.Info().Str("sku", item.SKU).Msg("Товар успешно обновлен")
+    return nil
 }
 
-func RemoveItem (sku string) error {
-		_ , err := db.DB.Exec(`DELETE FROM item WHERE sku = $1`,sku)
+func (r *PgItemRepository) RemoveItem (ctx context.Context,sku string) error {
+		res , err := r.db.ExecContext(ctx,`DELETE FROM item WHERE sku = $1`,sku)
 		if err != nil {
-			log.Println("❌ Произошла ошибка при удалении товара: ", err)
+			r.log.Error().Err(err).Str("sku", sku).Msg("Ошибка при удалении товара")
+			return err
 		}
-	return err
+		affected, _ := res.RowsAffected()
+		if affected == 0 {
+			r.log.Warn().Str("sku", sku).Msg("Товар не найден для удаления")
+			return sql.ErrNoRows
+		}
+		r.log.Info().Str("sku", sku).Msg("Товар успешно удален")
+    return nil
 }
 
-func AddItem(item model.Item) error {
-	_, err := db.DB.NamedExec(`
+func (r *PgItemRepository) AddItem(ctx context.Context,item model.Item) error {
+		query := `
 		INSERT INTO item (
-			sku, name, description, uom,
-			reorder_level, reorder_qty, price, cost, created_at
+				sku, name, description, uom,
+				reorder_level, reorder_qty, price, cost, created_at
 		) VALUES (
-			:sku, :name, :description, :uom,
-			:reorder_level, :reorder_qty, :price, :cost, NOW()
+				:sku, :name, :description, :uom,
+				:reorder_level, :reorder_qty, :price, :cost, NOW()
 		)
-	`, item)
-
+	`
+	_, err := r.db.NamedExecContext(ctx, query, item)
 	if err != nil {
-		log.Println("❌ Ошибка при добавлении товара:", err)
+		r.log.Error().Err(err).Str("sku", item.SKU).Msg("Ошибка при добавлении товара")
+		return err
 	}
-	return err
+	r.log.Info().Str("sku", item.SKU).Msg("Товар успешно добавлен")
+	return nil
 }
 
-func FindItems(filter model.ItemFilter) ([]model.Item, error) {
+func (r *PgItemRepository) AddItemTx(ctx context.Context, tx *sqlx.Tx, item model.Item) error {
 	query := `
-		SELECT * FROM item
-		WHERE
-			(:sku IS NULL OR sku = :sku) AND
-			(:name IS NULL OR name ILIKE '%' || :name || '%') AND
-			(:uom IS NULL OR uom = :uom) AND
-			(:price_min IS NULL OR price >= :price_min) AND
-			(:price_max IS NULL OR price <= :price_max)
-		ORDER BY created_at DESC
+			INSERT INTO item (
+					sku, name, description, uom,
+					reorder_level, reorder_qty, price, cost, created_at
+			) VALUES (
+					:sku, :name, :description, :uom,
+					:reorder_level, :reorder_qty, :price, :cost, NOW()
+			)
 	`
-
-	rows, err := db.DB.NamedQuery(query, filter)
+	_, err := tx.NamedExecContext(ctx, query, item)
 	if err != nil {
-		log.Println("❌ Ошибка при поиске товаров:", err)
-		return nil, err
+			r.log.Error().Err(err).Str("sku", item.SKU).Msg("Ошибка при добавлении товара (Tx)")
+			return err
+	}
+	r.log.Info().Str("sku", item.SKU).Msg("Товар успешно добавлен (Tx)")
+	return nil
+}
+
+func (r *PgItemRepository) FindItems(ctx context.Context, filter model.ItemFilter) ([]model.Item, error) {
+	query := `
+			SELECT * FROM item
+			WHERE
+					(:sku IS NULL OR sku = :sku) AND
+					(:name IS NULL OR name ILIKE '%' || :name || '%') AND
+					(:uom IS NULL OR uom = :uom) AND
+					(:price_min IS NULL OR price >= :price_min) AND
+					(:price_max IS NULL OR price <= :price_max)
+			ORDER BY created_at DESC
+	`
+	rows, err := r.db.NamedQueryContext(ctx, query, filter)
+	if err != nil {
+			r.log.Error().Err(err).Msg("Ошибка при поиске товаров")
+			return nil, err
 	}
 	defer rows.Close()
 
 	var items []model.Item
 	for rows.Next() {
-		var item model.Item
-		if err := rows.StructScan(&item); err != nil {
-			return nil, err
-		}
-		items = append(items, item)
+			var item model.Item
+			if err := rows.StructScan(&item); err != nil {
+					r.log.Error().Err(err).Msg("Ошибка при чтении результата поиска")
+					return nil, err
+			}
+			items = append(items, item)
 	}
+	r.log.Info().Int("count", len(items)).Msg("Поиск товаров завершен")
 	return items, nil
+}
+
+func (r *PgItemRepository) ItemExistsTx(ctx context.Context, tx *sqlx.Tx, sku string) (bool, error){
+	var count int
+	err := tx.GetContext(ctx, &count, "SELECT COUNT(1) FROM item WHERE sku = $1", sku)
+	return count > 0, err
 }

@@ -635,3 +635,179 @@
 2025/06/11 16:24:49 Startup: инициализация логирования
 2025/06/11 16:27:55 === Приложение запущено ===
 2025/06/11 16:27:55 Startup: инициализация логирования
+2025/06/12 15:00:33 === Приложение запущено ===
+2025/06/12 15:00:33 Startup: инициализация базы данных
+2025/06/12 15:00:33 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/12 15:00:33 ✅ Подключение к PostgreSQL успешно
+2025/06/12 15:00:33 Startup: инициализация бота
+2025/06/12 15:00:33 Startup: завершён
+2025/06/12 15:33:09 === Приложение запущено ===
+2025/06/12 15:33:09 Startup: инициализация базы данных
+2025/06/12 15:33:09 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/12 15:33:09 ✅ Подключение к PostgreSQL успешно
+2025/06/12 15:33:09 Startup: инициализация бота
+2025/06/12 15:33:09 Startup: завершён
+2025/06/12 15:33:54 === Приложение запущено ===
+2025/06/12 15:33:54 Startup: инициализация базы данных
+2025/06/12 15:33:54 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/12 15:33:54 ✅ Подключение к PostgreSQL успешно
+2025/06/12 15:33:54 Startup: инициализация бота
+2025/06/12 15:33:54 Startup: завершён
+2025/06/12 15:39:39 === Приложение запущено ===
+2025/06/12 15:39:39 Startup: инициализация базы данных
+2025/06/12 15:39:39 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/12 15:39:40 ✅ Подключение к PostgreSQL успешно
+2025/06/12 15:39:40 Startup: инициализация бота
+2025/06/12 15:39:40 Startup: завершён
+2025/06/12 15:45:19 === Приложение запущено ===
+2025/06/12 15:45:19 Startup: инициализация базы данных
+2025/06/12 15:45:19 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/12 15:45:20 ✅ Подключение к PostgreSQL успешно
+2025/06/12 15:45:20 Startup: инициализация бота
+2025/06/12 15:45:20 Startup: завершён
+2025/06/12 15:48:41 === Приложение запущено ===
+2025/06/12 15:48:41 Startup: инициализация базы данных
+2025/06/12 15:48:41 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/12 15:48:42 ✅ Подключение к PostgreSQL успешно
+2025/06/12 15:48:42 Startup: инициализация бота
+2025/06/12 15:48:42 Startup: завершён
+2025/06/12 15:49:03 GetItems: found 3 items
+2025/06/12 15:49:03 {ItemID:3 SKU:sadc Name:dsf Description:0xc000030c70 UOM:sd ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:1 Valid:true}} Cost:{NullFloat64:{Float64:222 Valid:true}} CreatedAt:2025-06-12 15:49:02.881661 +0000 +0000}
+2025/06/12 15:49:03 {ItemID:2 SKU:dasdas Name:sadasdas Description:0xc000030d10 UOM:sd ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:1 Valid:true}} Cost:{NullFloat64:{Float64:1 Valid:true}} CreatedAt:2025-06-12 15:28:22.454218 +0000 +0000}
+2025/06/12 15:49:03 {ItemID:1 SKU:STO Name:Клавиатура RedDragon Description:0xc000030d70 UOM:100 ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:2500 Valid:true}} Cost:{NullFloat64:{Float64:1000 Valid:true}} CreatedAt:2025-06-11 16:29:16.323292 +0000 +0000}
+2025/06/12 15:49:37 GetItems: found 2 items
+2025/06/12 15:49:37 {ItemID:2 SKU:dasdas Name:sadasdas Description:0xc000030ea0 UOM:sd ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:1 Valid:true}} Cost:{NullFloat64:{Float64:1 Valid:true}} CreatedAt:2025-06-12 15:28:22.454218 +0000 +0000}
+2025/06/12 15:49:37 {ItemID:1 SKU:STO Name:Клавиатура RedDragon Description:0xc000030f00 UOM:100 ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:2500 Valid:true}} Cost:{NullFloat64:{Float64:1000 Valid:true}} CreatedAt:2025-06-11 16:29:16.323292 +0000 +0000}
+2025/06/12 15:51:09 ❌ Произошла ошибка при удалении товара:  pq: update or delete on table "item" violates foreign key constraint "stock_item_id_fkey" on table "stock"
+2025/06/12 15:55:27 GetItems: found 1 items
+2025/06/12 15:55:27 {ItemID:1 SKU:STO Name:Клавиатура RedDragon Description:0xc000030680 UOM:100 ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:2500 Valid:true}} Cost:{NullFloat64:{Float64:1000 Valid:true}} CreatedAt:2025-06-11 16:29:16.323292 +0000 +0000}
+2025/06/12 15:55:30 ❌ Произошла ошибка при удалении товара:  pq: update or delete on table "item" violates foreign key constraint "stock_item_id_fkey" on table "stock"
+2025/06/13 15:28:56 === Приложение запущено ===
+2025/06/13 15:28:56 Startup: инициализация базы данных
+2025/06/13 15:28:56 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/13 15:28:57 ✅ Подключение к PostgreSQL успешно
+2025/06/13 15:28:57 Startup: инициализация бота
+2025/06/13 15:28:57 Startup: завершён
+2025/06/13 15:29:00 GetItems: found 1 items
+2025/06/13 15:29:00 {ItemID:1 SKU:STO Name:Клавиатура RedDragon Description:0xc000093260 UOM:100 ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:2500 Valid:true}} Cost:{NullFloat64:{Float64:1000 Valid:true}} CreatedAt:2025-06-11 16:29:16.323292 +0000 +0000}
+2025/06/13 15:37:57 === Приложение запущено ===
+2025/06/13 15:37:57 Startup: инициализация базы данных
+2025/06/13 15:37:57 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/13 15:37:57 ✅ Подключение к PostgreSQL успешно
+2025/06/13 15:37:57 Startup: инициализация бота
+2025/06/13 15:37:57 Startup: завершён
+2025/06/13 15:38:00 GetItems: found 1 items
+2025/06/13 15:38:00 {ItemID:1 SKU:STO Name:Клавиатура RedDragon Description:0xc0002e0650 UOM:100 ReorderLevel:0 ReorderQty:0 Price:{NullFloat64:{Float64:2500 Valid:true}} Cost:{NullFloat64:{Float64:1000 Valid:true}} CreatedAt:2025-06-11 16:29:16.323292 +0000 +0000}
+2025/06/14 18:28:38 === Приложение запущено ===
+2025/06/14 18:28:38 Startup: инициализация базы данных
+2025/06/14 18:28:38 DB Config: host=810c149a5920.vps.myjino.ru port=49211 user=users
+2025/06/14 18:28:39 ✅ Подключение к PostgreSQL успешно
+2025/06/14 18:28:39 Startup: инициализация бота
+2025/06/14 18:28:39 Startup: завершён
+{"level":"info","time":"2025-06-14T18:35:44+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-14T18:35:54+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-14T18:35:58+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":1,"time":"2025-06-14T18:35:58+03:00","message":"Товары успешно получены"}
+{"level":"info","time":"2025-06-14T18:50:48+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-14T18:51:00+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-14T18:51:03+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":1,"time":"2025-06-14T18:51:04+03:00","message":"Товары успешно получены"}
+{"level":"info","time":"2025-06-14T18:52:17+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-14T18:53:51+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-14T18:54:01+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-14T18:54:04+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":1,"time":"2025-06-14T18:54:05+03:00","message":"Товары успешно получены"}
+{"level":"info","time":"2025-06-15T17:12:38+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-15T17:12:47+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-15T17:12:52+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":1,"time":"2025-06-15T17:12:53+03:00","message":"Товары успешно получены"}
+{"level":"info","count":1,"time":"2025-06-15T17:12:58+03:00","message":"Товары успешно получены"}
+{"level":"info","time":"2025-06-17T19:30:16+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:30:25+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:30:29+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":1,"time":"2025-06-17T19:30:30+03:00","message":"Товары успешно получены"}
+{"level":"error","error":"pq: syntax error at or near \"..\"","time":"2025-06-17T19:30:30+03:00","message":"Ошибка при получении weekly stock trend"}
+{"level":"error","error":"pq: syntax error at or near \"..\"","time":"2025-06-17T19:30:30+03:00","message":"Ошибка при получении weekly stock trend"}
+{"level":"info","count":1,"time":"2025-06-17T19:31:45+03:00","message":"Товары успешно получены"}
+{"level":"error","error":"pq: syntax error at or near \"..\"","time":"2025-06-17T19:31:45+03:00","message":"Ошибка при получении weekly stock trend"}
+{"level":"error","error":"pq: syntax error at or near \"..\"","time":"2025-06-17T19:31:45+03:00","message":"Ошибка при получении weekly stock trend"}
+{"level":"info","count":1,"time":"2025-06-17T19:32:08+03:00","message":"Пользователи успешно получены"}
+{"level":"info","name":"a","time":"2025-06-17T19:32:35+03:00","message":"Склад успешно добавлен"}
+{"level":"info","name":"a","time":"2025-06-17T19:32:35+03:00","message":"Склад успешно добавлен"}
+{"level":"info","count":2,"time":"2025-06-17T19:32:35+03:00","message":"Список складов успешно получен"}
+{"level":"info","count":2,"time":"2025-06-17T19:32:35+03:00","message":"Список складов успешно получен"}
+{"level":"info","time":"2025-06-17T19:36:24+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:36:33+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:36:36+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":7,"time":"2025-06-17T19:36:36+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","count":7,"time":"2025-06-17T19:36:36+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:36:37+03:00","message":"Товары успешно получены"}
+{"level":"info","time":"2025-06-17T19:51:07+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:51:15+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:51:18+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":7,"time":"2025-06-17T19:51:18+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","count":7,"time":"2025-06-17T19:51:18+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","total_stock":111,"item_count":1,"monthly_orders":0,"new_items":1,"time":"2025-06-17T19:51:19+03:00","message":"Данные дашборда успешно получены"}
+{"level":"info","total_stock":111,"item_count":1,"monthly_orders":0,"new_items":1,"time":"2025-06-17T19:51:19+03:00","message":"Данные дашборда успешно получены"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Товары успешно получены"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Список поставщиков успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Список поставщиков успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Остатки успешно получены"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Остатки успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:19+03:00","message":"Движения за месяц успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:19+03:00","message":"Движения за месяц успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:19+03:00","message":"Список отгрузок успешно получен"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:19+03:00","message":"Список отгрузок успешно получен"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:19+03:00","message":"Список поставок успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Топ товаров по остаткам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Топ товаров по остаткам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Оборот по складам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:19+03:00","message":"Оборот по складам успешно получен"}
+{"level":"info","count":2,"time":"2025-06-17T19:51:20+03:00","message":"Список складов успешно получен"}
+{"level":"info","count":2,"time":"2025-06-17T19:51:20+03:00","message":"Список складов успешно получен"}
+{"level":"info","time":"2025-06-17T19:51:37+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:51:46+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","time":"2025-06-17T19:51:49+03:00","message":"=== Приложение запущено ==="}
+{"level":"info","count":1,"time":"2025-06-17T19:51:49+03:00","message":"Товары успешно получены"}
+{"level":"info","count":7,"time":"2025-06-17T19:51:50+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","count":7,"time":"2025-06-17T19:51:50+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:50+03:00","message":"Список поставщиков успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:50+03:00","message":"Список поставщиков успешно получен"}
+{"level":"info","total_stock":111,"item_count":1,"monthly_orders":0,"new_items":1,"time":"2025-06-17T19:51:50+03:00","message":"Данные дашборда успешно получены"}
+{"level":"info","total_stock":111,"item_count":1,"monthly_orders":0,"new_items":1,"time":"2025-06-17T19:51:50+03:00","message":"Данные дашборда успешно получены"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:50+03:00","message":"Остатки успешно получены"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:50+03:00","message":"Остатки успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:50+03:00","message":"Движения за месяц успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:50+03:00","message":"Движения за месяц успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:50+03:00","message":"Список отгрузок успешно получен"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:50+03:00","message":"Список отгрузок успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:50+03:00","message":"Топ товаров по остаткам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:50+03:00","message":"Топ товаров по остаткам успешно получен"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:50+03:00","message":"Список поставок успешно получен"}
+{"level":"info","count":2,"time":"2025-06-17T19:51:51+03:00","message":"Список складов успешно получен"}
+{"level":"info","count":2,"time":"2025-06-17T19:51:51+03:00","message":"Список складов успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:51+03:00","message":"Оборот по складам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:51+03:00","message":"Оборот по складам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Товары успешно получены"}
+{"level":"info","count":7,"time":"2025-06-17T19:51:53+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","count":7,"time":"2025-06-17T19:51:53+03:00","message":"Weekly stock trend успешно получен"}
+{"level":"info","total_stock":111,"item_count":1,"monthly_orders":0,"new_items":1,"time":"2025-06-17T19:51:53+03:00","message":"Данные дашборда успешно получены"}
+{"level":"info","total_stock":111,"item_count":1,"monthly_orders":0,"new_items":1,"time":"2025-06-17T19:51:53+03:00","message":"Данные дашборда успешно получены"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Список поставщиков успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Список поставщиков успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Остатки успешно получены"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Остатки успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:53+03:00","message":"Движения за месяц успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:53+03:00","message":"Движения за месяц успешно получены"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:53+03:00","message":"Список отгрузок успешно получен"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:53+03:00","message":"Список отгрузок успешно получен"}
+{"level":"info","count":0,"time":"2025-06-17T19:51:53+03:00","message":"Список поставок успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Топ товаров по остаткам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Топ товаров по остаткам успешно получен"}
+{"level":"info","count":2,"time":"2025-06-17T19:51:53+03:00","message":"Список складов успешно получен"}
+{"level":"info","count":2,"time":"2025-06-17T19:51:53+03:00","message":"Список складов успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Оборот по складам успешно получен"}
+{"level":"info","count":1,"time":"2025-06-17T19:51:53+03:00","message":"Оборот по складам успешно получен"}
+{"level":"info","item_id":1,"supplier_id":1,"quantity":1222,"received_at":"2025-06-18","warehouse_id":2,"time":"2025-06-17T19:52:07+03:00","message":"Поставка успешно добавлена"}
+{"level":"info","item_id":1,"supplier_id":1,"quantity":1222,"received_at":"2025-06-18","warehouse_id":2,"time":"2025-06-17T19:52:07+03:00","message":"Поставка успешно добавлена (AddInboundSimple)"}
+{"level":"info","count":1,"time":"2025-06-17T19:52:07+03:00","message":"Список поставок успешно получен"}

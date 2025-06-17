@@ -1,13 +1,32 @@
 package repository
 
 import (
-	"inventory-app/backend/internal/db"
+	"context"
 	"inventory-app/backend/internal/model"
-	"log"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
-// Получить все отгрузки с деталями (Outbounds)
-func GetOutboundDetails() ([]model.OutboundDetails, error) {
+type OutboundRepository interface {
+	GetOutboundDetails(ctx context.Context) ([]model.OutboundDetails, error)
+	AddOutbound(ctx context.Context, outb model.Outbound) error
+	GetOutboundDetailsByDate(ctx context.Context, date string) ([]model.OutboundDetails, error)
+	DeleteOutbound(ctx context.Context, outboundId int) error
+	EditOutbound(ctx context.Context, outb model.Outbound) error
+}
+
+type PgOutboundRepository struct {
+	db  *sqlx.DB
+	log zerolog.Logger
+}
+
+func NewOutboundRepository(db *sqlx.DB, log zerolog.Logger) *PgOutboundRepository {
+	return &PgOutboundRepository{db: db, log: log}
+}
+
+// Получить все отгрузки с деталями
+func (r *PgOutboundRepository) GetOutboundDetails(ctx context.Context) ([]model.OutboundDetails, error) {
 	var items []model.OutboundDetails
 	query := `
 		SELECT
@@ -23,30 +42,38 @@ func GetOutboundDetails() ([]model.OutboundDetails, error) {
 		JOIN warehouse w   ON o.warehouse_id = w.warehouse_id
 		ORDER BY o.shipped_at DESC;
 	`
-	err := db.DB.Select(&items, query)
-
+	err := r.db.SelectContext(ctx, &items, query)
 	if err != nil {
-		log.Println("❌ Произошла ошибка при получении отгрузок: ", err)
+		r.log.Error().Err(err).Msg("Ошибка при получении отгрузок")
+		return nil, err
 	}
-
-	return items, err
+	r.log.Info().Int("count", len(items)).Msg("Список отгрузок успешно получен")
+	return items, nil
 }
 
-// Добавить отгрузку (Outbound)
-func AddOutbound(outb model.Outbound) error {
+// Добавить отгрузку
+func (r *PgOutboundRepository) AddOutbound(ctx context.Context, outb model.Outbound) error {
 	query := `
 		INSERT INTO outbound (item_id, quantity, shipped_at, destination, warehouse_id)
 		VALUES ($1, $2, COALESCE($3, now()), $4, $5)
 	`
-	_, err := db.DB.Exec(query, outb.ItemID, outb.Quantity, outb.ShippedAt, outb.Destination, outb.WarehouseID)
+	_, err := r.db.ExecContext(ctx, query, outb.ItemID, outb.Quantity, outb.ShippedAt, outb.Destination, outb.WarehouseID)
 	if err != nil {
-		log.Println("❌ Произошла ошибка при добавлении отгрузки: ", err)
+		r.log.Error().
+			Int("item_id", outb.ItemID).
+			Int("warehouse_id", outb.WarehouseID).
+			Err(err).Msg("Ошибка при добавлении отгрузки")
+		return err
 	}
-	return err
+	r.log.Info().
+		Int("item_id", outb.ItemID).
+		Int("warehouse_id", outb.WarehouseID).
+		Msg("Отгрузка успешно добавлена")
+	return nil
 }
 
 // Получить отгрузки по дате
-func GetOutboundDetailsByDate(date string) ([]model.OutboundDetails, error) {
+func (r *PgOutboundRepository) GetOutboundDetailsByDate(ctx context.Context, date string) ([]model.OutboundDetails, error) {
 	var items []model.OutboundDetails
 	query := `
 		SELECT
@@ -63,27 +90,34 @@ func GetOutboundDetailsByDate(date string) ([]model.OutboundDetails, error) {
 		WHERE DATE(o.shipped_at) = $1
 		ORDER BY o.shipped_at DESC;
 	`
-	err := db.DB.Select(&items, query, date)
+	err := r.db.SelectContext(ctx, &items, query, date)
 	if err != nil {
-		log.Println("❌ Произошла ошибка при получении отгрузок по дате: ", err)
+		r.log.Error().Str("date", date).Err(err).Msg("Ошибка при получении отгрузок по дате")
+		return nil, err
 	}
-	return items, err
+	r.log.Info().Str("date", date).Int("count", len(items)).Msg("Список отгрузок по дате успешно получен")
+	return items, nil
 }
 
 // Удалить отгрузку
-func DeleteOutbound(outboundId int) error {
-	query := `
-		DELETE FROM outbound WHERE outbound_id = $1;
-	`
-	_, err := db.DB.Exec(query, outboundId)
+func (r *PgOutboundRepository) DeleteOutbound(ctx context.Context, outboundId int) error {
+	query := `DELETE FROM outbound WHERE outbound_id = $1;`
+	res, err := r.db.ExecContext(ctx, query, outboundId)
 	if err != nil {
-		log.Println("❌ Произошла ошибка при удалении отгрузки: ", err)
+		r.log.Error().Int("outbound_id", outboundId).Err(err).Msg("Ошибка при удалении отгрузки")
+		return err
 	}
-	return err
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		r.log.Warn().Int("outbound_id", outboundId).Msg("Отгрузка не найдена для удаления")
+	} else {
+		r.log.Info().Int("outbound_id", outboundId).Msg("Отгрузка успешно удалена")
+	}
+	return nil
 }
 
 // Редактировать отгрузку
-func EditOutbound(outb model.Outbound) error {
+func (r *PgOutboundRepository) EditOutbound(ctx context.Context, outb model.Outbound) error {
 	query := `
 		UPDATE outbound
 		SET item_id = $1,
@@ -93,9 +127,11 @@ func EditOutbound(outb model.Outbound) error {
 			destination = $5
 		WHERE outbound_id = $6;
 	`
-	_, err := db.DB.Exec(query, outb.ItemID, outb.WarehouseID, outb.Quantity, outb.ShippedAt, outb.Destination, outb.OutboundID)
+	_, err := r.db.ExecContext(ctx, query, outb.ItemID, outb.WarehouseID, outb.Quantity, outb.ShippedAt, outb.Destination, outb.OutboundID)
 	if err != nil {
-		log.Println("❌ Произошла ошибка при изменении данных отгрузки: ", err)
+		r.log.Error().Int("outbound_id", outb.OutboundID).Err(err).Msg("Ошибка при изменении данных отгрузки")
+		return err
 	}
-	return err
+	r.log.Info().Int("outbound_id", outb.OutboundID).Msg("Данные отгрузки успешно изменены")
+	return nil
 }

@@ -1,18 +1,38 @@
 package repository
 
 import (
-	"inventory-app/backend/internal/db"
+	"context"
 	"inventory-app/backend/internal/model"
-	"log"
-	_"time"
 	"fmt"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
-func GetStockDetails() ([]model.ItemWithStock, error) {
+type StockRepository interface {
+	GetStockDetails(ctx context.Context) ([]model.ItemWithStock, error)
+	GetWeeklyStockTrend(ctx context.Context) ([]model.DailyStock, error)
+	AddStock(ctx context.Context, itemID, quantity, warehouseID int) error
+	FindStockByWarehouse(ctx context.Context, warehouseID int) ([]model.ItemWithStock, error)
+	ChangeStock(ctx context.Context, itemID, warehouseID, newQuantity int) error
+	RemoveStock(ctx context.Context, stockID int) error
+	GetStocks(ctx context.Context) ([]model.Stock, error)
+}
+
+type PgStockRepository struct {
+	db  *sqlx.DB
+	log zerolog.Logger
+}
+
+func NewStockRepository(db *sqlx.DB, log zerolog.Logger) *PgStockRepository {
+	return &PgStockRepository{db: db, log: log}
+}
+
+func (r *PgStockRepository) GetStockDetails(ctx context.Context) ([]model.ItemWithStock, error) {
 	var result []model.ItemWithStock
-	err := db.DB.Select(&result, `
+	err := r.db.SelectContext(ctx, &result, `
 	SELECT
-		s.stock_id,         -- ← обязательно!
+		s.stock_id,
 		i.item_id,
 		w.warehouse_id,
 		i.name,
@@ -25,15 +45,15 @@ func GetStockDetails() ([]model.ItemWithStock, error) {
 	ORDER BY i.name
 	`)
 	if err != nil {
-		log.Println("❌ Ошибка при получении данных остатков:", err)
+		r.log.Error().Err(err).Msg("Ошибка при получении данных остатков")
 		return nil, err
 	}
+	r.log.Info().Int("count", len(result)).Msg("Остатки успешно получены")
 	return result, nil
 }
 
-func GetWeeklyStockTrend() ([]model.DailyStock, error) {
-
-	query :=`WITH period AS (
+func (r *PgStockRepository) GetWeeklyStockTrend(ctx context.Context) ([]model.DailyStock, error) {
+	query := `WITH period AS (
     SELECT
         (CURRENT_DATE - INTERVAL '6 days')::date AS start_date,
         CURRENT_DATE::date AS end_date
@@ -90,36 +110,32 @@ SELECT
 FROM days a
 JOIN running_total r ON a.d = r.d
 ORDER BY a.d;
-
-
 `
-
-
 	var trend []model.DailyStock
-	err := db.DB.Select(&trend, query)
+	err := r.db.SelectContext(ctx, &trend, query)
 	if err != nil {
-		log.Println("❌ Ошибка при получении weekly stock trend:", err)
+		r.log.Error().Err(err).Msg("Ошибка при получении weekly stock trend")
 		return nil, err
 	}
-
+	r.log.Info().Int("count", len(trend)).Msg("Weekly stock trend успешно получен")
 	return trend, nil
 }
 
-// Добавить или обновить остаток
-func AddStock(itemID, quantity, warehouseID int) error {
+func (r *PgStockRepository) AddStock(ctx context.Context, itemID, quantity, warehouseID int) error {
 	// Проверка: существует ли товар
 	var exists bool
-	err := db.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM item WHERE item_id = $1)`, itemID).Scan(&exists)
+	err := r.db.QueryRowxContext(ctx, `SELECT EXISTS(SELECT 1 FROM item WHERE item_id = $1)`, itemID).Scan(&exists)
 	if err != nil {
-		log.Println("❌ Ошибка при проверке item:", err)
+		r.log.Error().Int("item_id", itemID).Err(err).Msg("Ошибка при проверке наличия item")
 		return err
 	}
 	if !exists {
+		r.log.Warn().Int("item_id", itemID).Msg("Товар не существует")
 		return fmt.Errorf("Товар с ID %d не существует", itemID)
 	}
 
 	// Вставка/обновление остатка
-	_, err = db.DB.Exec(`
+	_, err = r.db.ExecContext(ctx, `
 		INSERT INTO stock (item_id, quantity, warehouse_id, last_updated)
 		VALUES ($1, $2, $3, NOW())
 		ON CONFLICT (item_id, warehouse_id)
@@ -127,17 +143,25 @@ func AddStock(itemID, quantity, warehouseID int) error {
 	`, itemID, quantity, warehouseID)
 
 	if err != nil {
-		log.Println("❌ Ошибка при добавлении остатка:", err)
+		r.log.Error().
+			Int("item_id", itemID).
+			Int("warehouse_id", warehouseID).
+			Err(err).
+			Msg("Ошибка при добавлении/обновлении остатка")
+		return err
 	}
-	return err
+	r.log.Info().
+		Int("item_id", itemID).
+		Int("warehouse_id", warehouseID).
+		Msg("Остаток успешно добавлен/обновлён")
+	return nil
 }
 
-// Найти все остатки по складу
-func FindStockByWarehouse(warehouseID int) ([]model.ItemWithStock, error) {
+func (r *PgStockRepository) FindStockByWarehouse(ctx context.Context, warehouseID int) ([]model.ItemWithStock, error) {
 	var result []model.ItemWithStock
-	err := db.DB.Select(&result, `
+	err := r.db.SelectContext(ctx, &result, `
 	SELECT
-		s.stock_id,         -- ← обязательно!
+		s.stock_id,
 		i.item_id,
 		w.warehouse_id,
 		i.name,
@@ -150,45 +174,61 @@ func FindStockByWarehouse(warehouseID int) ([]model.ItemWithStock, error) {
 	WHERE s.warehouse_id = $1
 	`, warehouseID)
 	if err != nil {
-		log.Println("❌ Ошибка при получении остатков с деталями по складу:", err)
+		r.log.Error().Int("warehouse_id", warehouseID).Err(err).Msg("Ошибка при получении остатков по складу")
+		return nil, err
 	}
+	r.log.Info().Int("warehouse_id", warehouseID).Int("count", len(result)).Msg("Остатки по складу успешно получены")
 	return result, err
 }
 
-
-func ChangeStock(itemID, warehouseID, newQuantity int) error {
-	_, err := db.DB.Exec(`
+func (r *PgStockRepository) ChangeStock(ctx context.Context, itemID, warehouseID, newQuantity int) error {
+	_, err := r.db.ExecContext(ctx, `
 		UPDATE stock
 		SET quantity = $1, last_updated = NOW()
 		WHERE item_id = $2 AND warehouse_id = $3
 	`, newQuantity, itemID, warehouseID)
 
 	if err != nil {
-		log.Println("❌ Ошибка при изменении stock:", err)
+		r.log.Error().
+			Int("item_id", itemID).
+			Int("warehouse_id", warehouseID).
+			Err(err).
+			Msg("Ошибка при изменении stock")
+		return err
 	}
-	return err
+	r.log.Info().
+		Int("item_id", itemID).
+		Int("warehouse_id", warehouseID).
+		Int("new_quantity", newQuantity).
+		Msg("Остаток успешно изменён")
+	return nil
 }
 
-// Удалить запись stock
-func RemoveStock(stockID int) error {
-	_, err := db.DB.Exec(`
+func (r *PgStockRepository) RemoveStock(ctx context.Context, stockID int) error {
+	res, err := r.db.ExecContext(ctx, `
 		DELETE FROM stock
 		WHERE stock_id = $1
 	`, stockID)
-
 	if err != nil {
-		log.Println("❌ Ошибка при удалении stock:", err)
+		r.log.Error().Int("stock_id", stockID).Err(err).Msg("Ошибка при удалении stock")
+		return err
 	}
-	return err
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		r.log.Warn().Int("stock_id", stockID).Msg("Запись stock не найдена для удаления")
+	} else {
+		r.log.Info().Int("stock_id", stockID).Msg("Запись stock успешно удалена")
+	}
+	return nil
 }
 
-
-// Получить все остатки
-func GetStocks() ([]model.Stock, error) {
+func (r *PgStockRepository) GetStocks(ctx context.Context) ([]model.Stock, error) {
 	var result []model.Stock
-	err := db.DB.Select(&result, `SELECT * FROM stock`)
+	err := r.db.SelectContext(ctx, &result, `SELECT * FROM stock`)
 	if err != nil {
-		log.Println("❌ Ошибка при получении всех stock:", err)
+		r.log.Error().Err(err).Msg("Ошибка при получении всех stock")
+		return nil, err
 	}
+	r.log.Info().Int("count", len(result)).Msg("Все остатки успешно получены")
 	return result, err
 }

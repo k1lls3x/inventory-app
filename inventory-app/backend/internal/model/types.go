@@ -1,7 +1,6 @@
 package model
 import "time"
 
-
 type User struct {
 	UserID   int    `db:"user_id" json:"user_id"`
 	Username string `db:"username" json:"username"`
@@ -9,7 +8,6 @@ type User struct {
 	FullName string `db:"full_name" json:"full_name"`
 	Role     string `db:"role" json:"role"`
 }
-
 
 type Item struct {
 	ItemID       int              `db:"item_id" json:"item_id"`
@@ -32,6 +30,7 @@ type Supplier struct {
 	Phone         *string `db:"phone" json:"phone"`
 	Email         *string `db:"email" json:"email"`
 }
+
 type Inbound struct {
 	InboundID    int       `db:"inbound_id" json:"inbound_id"`
 	ItemID       int       `db:"item_id" json:"item_id"`
@@ -90,7 +89,6 @@ type Movement struct {
 	ShippedAt     *time.Time `db:"shipped_at"      json:"shipped_at,omitempty"`
 }
 
-
 type ItemWithStock struct {
 	StockID     int    `json:"stock_id" db:"stock_id"`
 	ItemID      int    `json:"item_id" db:"item_id"`
@@ -130,6 +128,12 @@ type InboundDetails struct {
 	Warehouse string `db:"warehouse" json:"warehouse"`
 }
 
+type DashboardData struct {
+	TotalStock    float64 `json:"total_stock"`
+	ItemCount     int     `json:"item_count"`
+	MonthlyOrders int     `json:"monthly_orders"`
+	NewItems      int     `json:"new_items"`
+}
 
 type UserUpdate struct {
 	UserID   int    `json:"user_id"`

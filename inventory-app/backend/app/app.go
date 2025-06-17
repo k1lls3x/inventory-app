@@ -3,166 +3,212 @@ package app
 import (
 	"context"
 	"inventory-app/backend/internal/db"
-	"inventory-app/backend/internal/handler/dashboard"
+
 	"inventory-app/backend/internal/handler/export"
 
 	"inventory-app/backend/internal/model"
 	"inventory-app/backend/internal/repository"
-
-	"log"
+	"inventory-app/backend/internal/service"
 	"os"
-	"inventory-app/backend/auth"
+
 	"errors"
 	"time"
 	"fmt"
+		"github.com/rs/zerolog"
 )
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx             context.Context
+	logger zerolog.Logger
+	itemService     *service.ItemService
+	userService     *service.UserService
+	authService     *service.AuthService
+	inboundService  *service.InboundService
+	supplierService *service.SupplierService
+	warehouseService *service.WarehouseService
+	stockService    *service.StockService
+	outboundService *service.OutboundService
+	dashboardService *service.DashboardService
+	movementService *service.MovementService
 }
-func (a *App) GetTopItems() ([]model.ItemWithStock, error) {
-	return dashboard.LoadTopItems()
-}
-// NewApp creates a new App application struct
+
 func NewApp() *App {
-	return &App{}
+
+	dbInstance := db.Init()
+
+	logFile, err := os.OpenFile("logs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	var logger zerolog.Logger
+	if err != nil {
+			logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
+			logger.Error().Err(err).Msg("Ошибка открытия файла логов, пишем в stdout")
+	} else {
+			logger = zerolog.New(logFile).With().Timestamp().Logger()
+			logger.Info().Msg("=== Приложение запущено ===")
+	}
+
+	itemRepo := repository.NewPgItemRepository(dbInstance, logger)
+	itemService := service.NewItemService(itemRepo, logger)
+
+	userRepo := repository.NewUserRepository(dbInstance, logger)
+	userService := service.NewUserService(userRepo, logger)
+
+	authRepo := repository.NewAuthRepository(dbInstance,logger)
+	authService := service.NewAuthService(authRepo, logger)
+
+	inboundRepo := repository.NewInboundRepository(dbInstance,logger)
+	inboundService := service.NewInboundService(inboundRepo,itemRepo,dbInstance,logger)
+
+	supplierRepo := repository.NewSupplierRepository(dbInstance, logger)
+	supplierService := service.NewSupplierService(supplierRepo, dbInstance, logger)
+
+	warehouseRepo := repository.NewWarehouseRepository(dbInstance, logger)
+	warehouseService := service.NewWarehouseService(warehouseRepo, dbInstance, logger)
+
+	stockRepo := repository.NewStockRepository(dbInstance, logger)
+	stockService := service.NewStockService(stockRepo, dbInstance, logger)
+
+	outboundRepo := repository.NewOutboundRepository(dbInstance, logger)
+	outboundService := service.NewOutboundService(outboundRepo, dbInstance, logger)
+
+	dashboardRepo := repository.NewDashboardRepository(dbInstance, logger)
+	dashboardService := service.NewDashboardService(dashboardRepo, dbInstance, logger)
+
+	movementRepo := repository.NewMovementRepository(dbInstance, logger)
+	movementService := service.NewMovementService(movementRepo, dbInstance, logger)
+
+	return &App{
+		itemService:      itemService,
+		userService:      userService,
+		authService:      authService,
+		inboundService:   inboundService,
+		supplierService:  supplierService,
+		warehouseService: warehouseService,
+		stockService:     stockService,
+		outboundService:  outboundService,
+		dashboardService: dashboardService,
+		movementService:  movementService,
+		logger:  logger,
+	}
+
 }
-func (a *App) GetTurnoverByWarehouse() ([]model.ItemTurnoverByWarehouse, error) {
-	return dashboard.LoadTurnoverByWarehouse()
-}
+
 // Startup is called when the app starts
 func (a *App) Startup(ctx context.Context) {
-	  // === ЛОГИРОВАНИЕ В ФАЙЛ ===
-    logFile, err := os.OpenFile("logs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-    if err != nil {
-        // Если не получилось открыть файл, логируем в стандартный вывод
-        log.Println("Ошибка открытия файла логов:", err)
-    } else {
-        log.SetOutput(logFile)
-        log.Println("=== Приложение запущено ===")
-    }
-
     a.ctx = ctx
-
-    log.Println("Startup: инициализация базы данных")
-    db.Init()
-		log.Println("Startup: инициализация бота")
-    log.Println("Startup: завершён")
-
 }
 
-func (a *App) GetDashboard() (*dashboard.DashboardData, error) {
-	return dashboard.LoadDashboard()
+func (a *App) GetDashboard() (*model.DashboardData, error) {
+	return a.dashboardService.LoadDashboard(a.ctx)
 }
-
 //-----------------------STOCKS---------------------------------\\
 
-func (a *App) FindStockByWarehouse(warehouseID int) ([]model.ItemWithStock, error){
-	return repository.FindStockByWarehouse(warehouseID)
+func (a *App) GetStockDetails() ([]model.ItemWithStock, error) {
+	return a.stockService.GetStockDetails(a.ctx)
 }
-
-func (a *App) ChangeStock(itemID, warehouseID, newQuantity int) error{
-	return repository.ChangeStock(itemID, warehouseID, newQuantity)
-}
-
-func (a *App) RemoveStock(stockID int) error {
-	return repository.RemoveStock(stockID)
-}
-
-func (a *App) GetStockDetails() ([]model.ItemWithStock, error){
-	return repository.GetStockDetails()
-}
-
 func (a *App) GetStocks() ([]model.Stock, error) {
-	return repository.GetStocks()
+	return a.stockService.GetStocks(a.ctx)
 }
-
 func (a *App) AddStock(itemID, quantity, warehouseID int) error {
-	return repository.AddStock( itemID, quantity, warehouseID)
+	return a.stockService.AddStock(a.ctx, itemID, quantity, warehouseID)
 }
-
-func (a *App)ExportStockToExcel() (string, error)  {
-	return Export.ExportStockToExcel()
+func (a *App) RemoveStock(stockID int) error {
+	return a.stockService.RemoveStock(a.ctx, stockID)
 }
-
+func (a *App) FindStockByWarehouse(warehouseID int) ([]model.ItemWithStock, error) {
+	return a.stockService.FindStockByWarehouse(a.ctx, warehouseID)
+}
+func (a *App) ChangeStock(itemID, warehouseID, newQuantity int) error {
+	return a.stockService.ChangeStock(a.ctx, itemID, warehouseID, newQuantity)
+}
 func (a *App) GetWeeklyStockTrend() ([]model.DailyStock, error) {
-	return repository.GetWeeklyStockTrend()
+	return a.stockService.GetWeeklyStockTrend(a.ctx)
 }
+
+func (a *App) ExportStockToExcel() (string, error) {
+	return Export.ExportStockToExcel(a.stockService, a.logger)
+}
+
 
 //-----------------------Items---------------------------------\\
 
 func (a *App) GetItems() ([]model.Item, error) {
-	return repository.GetItems()
+	return a.itemService.ListItems(a.ctx)
 }
 
 func (a *App) GetAllItems() ([]model.ItemBrief, error) {
-	return repository.GetItemBriefList()
+	return a.itemService.ListItemsBriefs(a.ctx)
+}
+
+func (a *App) GetTopItems() ([]model.ItemWithStock, error) {
+	return a.dashboardService.LoadTopItems(a.ctx)
 }
 
 func (a *App)  UpdateItem(item model.Item) error {
-	return repository.UpdateItem(item)
+	return a.itemService.UpdateItem(a.ctx,item)
 }
 
 func (a *App) RemoveItem(sku string) error {
-	return repository.RemoveItem(sku)
+	return a.itemService.RemoveItem(a.ctx,sku)
 }
 
 func (a *App) AddItem(item model.Item) error {
-	return repository.AddItem(item)
+	return a.itemService.AddItem(a.ctx,item)
 }
 
 func (a *App) FindItems(filter model.ItemFilter) ([]model.Item, error) {
-	return repository.FindItems(filter)
+	return a.itemService.FindItems(a.ctx,filter)
 }
 
 //-----------------------Warehouse---------------------------------\\
 func (a *App) GetWarehouses() ([]model.Warehouse, error) {
-	return repository.GetWarehouses()
+	return a.warehouseService.GetWarehouses(a.ctx)
 }
-
 func (a *App) AddWarehouse(warehouse model.Warehouse) error {
-	return repository.AddWarehouse(warehouse)
+	return a.warehouseService.AddWarehouse(a.ctx, warehouse)
+}
+func (a *App) EditWarehouse(warehouse model.Warehouse) error {
+	return a.warehouseService.EditWarehouse(a.ctx, warehouse)
 }
 
-func (a *App) EditWarehouse(warehouse model.Warehouse) error {
-	return repository.EditWarehouse(warehouse)
+func (a *App) GetTurnoverByWarehouse() ([]model.ItemTurnoverByWarehouse, error) {
+	return a.dashboardService.LoadTurnoverByWarehouse(a.ctx)
 }
 //-----------------------Indbound---------------------------------\\
 
 func (a *App) GetInboundDetails()([]model.InboundDetails,error){
-	return repository.GetInboundDetails()
+	return a.inboundService.ListInboundDetails(a.ctx)
 }
 
 func (a *App) GetInboundDetailsByDate(date string)([]model.InboundDetails,error){
-	return repository.GetInboundDetailsByDate(date)
+	return a.inboundService.ListInboundDetailsByDate(a.ctx,date)
 }
 
 func (a *App) AddInbound(inb model.Inbound) error{
-	return repository.AddInbound(inb);
+	return  a.inboundService.AddInbound(a.ctx,inb);
+}
+func (a *App) AddInboundTx(inb model.Inbound, item model.Item) error{
+	return  a.inboundService.AddInboundTx(a.ctx,inb,item);
 }
 func (a *App) DeleteInbound(inboundId int) error{
-	return repository.DeleteInbound(inboundId)
+	return  a.inboundService.DeleteInbound(a.ctx,inboundId)
 }
 
 func (a *App)  EditInbound(inb model.Inbound) error{
-	return repository.EditInbound(inb)
+	return  a.inboundService.EditInbound(a.ctx,inb)
 }
 //-----------------------Supplier---------------------------------\\
-func (a *App)  GetSuppliers() ([]model.Supplier, error){
-	return repository.GetSuppliers()
+func (a *App) GetSuppliers() ([]model.Supplier, error) {
+	return a.supplierService.GetSuppliers(a.ctx)
 }
-
 func (a *App) EditSupplier(sp model.Supplier) error {
-	return repository.EditSupplier(sp)
+	return a.supplierService.EditSupplier(a.ctx, sp)
 }
-
-func (a *App) AddSupplier(sp model.Supplier) error{
-	return repository.AddSupplier(sp)
+func (a *App) AddSupplier(sp model.Supplier) error {
+	return a.supplierService.AddSupplier(a.ctx, sp)
 }
-
 func (a *App) RemoveSupplier(supplierId int) error {
-	return repository.RemoveSupplier(supplierId)
+	return a.supplierService.RemoveSupplier(a.ctx, supplierId)
 }
 //-----------------------Auth---------------------------------\\
 
@@ -172,11 +218,11 @@ func (a *App) RegisterUser(username, password, fullName, role string) error {
 			Role:     role,
 			FullName: fullName,
 	}
-	return auth.Register(user, password)
+	return a.authService.Register(a.ctx,user, password)
 }
 
 func (a *App) LoginUser(username, password string) (*model.User, error) {
-	user, ok := auth.Authorize(username, password)
+	user, ok := a.authService.Authorize(a.ctx,username, password)
 	if !ok {
 			return nil, errors.New("Неверный логин или пароль")
 	}
@@ -184,76 +230,79 @@ func (a *App) LoginUser(username, password string) (*model.User, error) {
 }
 
 func (a *App) ChangePassword(login, oldPassword, newPassword string) error{
-	return auth.ChangePassword(login,oldPassword,newPassword)
+	return a.authService.ChangePassword(a.ctx,login,oldPassword,newPassword)
 }
 
 //-----------------------Users---------------------------------\\
 
-func (a *App) GetUsers()([]model.User, error){
-	return repository.GetUsers()
+func (a *App) RemoveUser(userId int) error {
+	return a.userService.RemoveUser(a.ctx, userId)
 }
 
-func (a *App) RemoveUser(userId int) error{
-	return repository.RemoveUser(userId)
+func (a *App) GetUsers() ([]model.User, error) {
+	return a.userService.GetUsers(a.ctx)
 }
 
-func (a *App) ChangeUserData(user model.UserUpdate) error {
-	return repository.ChangeUserData(user)
+func (a *App) ChangeUserData(u model.UserUpdate) error {
+	return a.userService.ChangeUserData(a.ctx, u)
 }
+
 
 //-----------------------Movements---------------------------------\\
 func (a *App) GetAllMovementsThisMonth() ([]model.Movement, error){
-	return repository.GetAllMovementsThisMonth()
+	return a.movementService.GetAllMovementsThisMonth(a.ctx)
 }
 
 //-----------------------Outbound---------------------------------\\
+
 func (a *App) GetOutboundDetails() ([]model.OutboundDetails, error) {
-	return repository.GetOutboundDetails()
+	return a.outboundService.GetOutboundDetails(a.ctx)
 }
 
 func (a *App) AddOutbound(itemID int, quantity int, shippedAtStr string, destination string, warehouseID int) error {
 	var shippedAt time.Time
 	var err error
 	if shippedAtStr != "" {
-			shippedAt, err = time.Parse("2006-01-02", shippedAtStr)
-			if err != nil {
-					return fmt.Errorf("invalid date format, expected YYYY-MM-DD: %w", err)
-			}
+		shippedAt, err = time.Parse("2006-01-02", shippedAtStr)
+		if err != nil {
+			return fmt.Errorf("invalid date format, expected YYYY-MM-DD: %w", err)
+		}
 	}
-	return repository.AddOutbound(model.Outbound{
-			ItemID:      itemID,
-			Quantity:    quantity,
-			ShippedAt:   shippedAt,
-			Destination: &destination,
-			WarehouseID: warehouseID,
+	return a.outboundService.AddOutbound(a.ctx, model.Outbound{
+		ItemID:      itemID,
+		Quantity:    quantity,
+		ShippedAt:   shippedAt,
+		Destination: &destination,
+		WarehouseID: warehouseID,
 	})
 }
 
 func (a *App) EditOutbound(
-	itemID      int,
-	quantity    int,
+	itemID int,
+	quantity int,
 	shippedAtStr string,
 	destination string,
 	warehouseID int,
-	outboundID  int,
+	outboundID int,
 ) error {
 	var shippedAt time.Time
 	var err error
 	if shippedAtStr != "" {
-			shippedAt, err = time.Parse("2006-01-02", shippedAtStr)
-			if err != nil {
-					return fmt.Errorf("invalid date %q, expected YYYY-MM-DD: %w", shippedAtStr, err)
-			}
+		shippedAt, err = time.Parse("2006-01-02", shippedAtStr)
+		if err != nil {
+			return fmt.Errorf("invalid date %q, expected YYYY-MM-DD: %w", shippedAtStr, err)
+		}
 	}
-	return repository.EditOutbound(model.Outbound{
-			OutboundID:  outboundID,
-			ItemID:      itemID,
-			Quantity:    quantity,
-			ShippedAt:   shippedAt,
-			Destination: &destination,
-			WarehouseID: warehouseID,
+	return a.outboundService.EditOutbound(a.ctx, model.Outbound{
+		OutboundID:  outboundID,
+		ItemID:      itemID,
+		Quantity:    quantity,
+		ShippedAt:   shippedAt,
+		Destination: &destination,
+		WarehouseID: warehouseID,
 	})
 }
+
 func (a *App) RemoveOutbound(outboundId int) error {
-	return repository.DeleteOutbound(outboundId)
+	return a.outboundService.DeleteOutbound(a.ctx, outboundId)
 }

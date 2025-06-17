@@ -1,5 +1,19 @@
-export namespace dashboard {
+export namespace model {
 	
+	export class DailyStock {
+	    date: string;
+	    total: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DailyStock(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.date = source["date"];
+	        this.total = source["total"];
+	    }
+	}
 	export class DashboardData {
 	    total_stock: number;
 	    item_count: number;
@@ -16,25 +30,6 @@ export namespace dashboard {
 	        this.item_count = source["item_count"];
 	        this.monthly_orders = source["monthly_orders"];
 	        this.new_items = source["new_items"];
-	    }
-	}
-
-}
-
-export namespace model {
-	
-	export class DailyStock {
-	    date: string;
-	    total: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new DailyStock(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.date = source["date"];
-	        this.total = source["total"];
 	    }
 	}
 	export class Inbound {

@@ -1164,12 +1164,44 @@ import {
 const loggedIn = ref(localStorage.getItem('loggedIn') === 'true')
 const emit = defineEmits(['login-success'])
 
-function onLoginSuccess(userData) {
-  user.value = userData        // <-- вот здесь присваивай!
+async function onLoginSuccess(userData) {
+  user.value = userData     
   loggedIn.value = true
   localStorage.setItem('loggedIn', 'true')
+  await loadInitialData()
 }
 
+async function loadInitialData() {
+  items.value = await GetItems() || []
+  weeklyStockData.value = await GetWeeklyStockTrend() || []
+  const dash = await GetDashboard()
+  totalStock.value = dash.total_stock
+  itemCount.value = dash.item_count
+  monthlyOrders.value = dash.monthly_orders
+  newItems.value = dash.new_items
+  suppliers.value = await GetSuppliers() || []
+  const stockData = await GetStockDetails()
+  stockList.value = stockData.map(s => ({
+    id: s.stock_id,
+    stock_id: s.stock_id,
+    item_id: s.item_id,
+    warehouse_id: s.warehouse_id,
+    name: s.name,
+    sku: s.sku,
+    warehouse: s.warehouse,
+    quantity: s.quantity
+  }))
+  await reloadMovements()
+  await reloadOutbound()
+  try {
+    deliveriesList.value = await GetInboundDetails() || []
+  } catch (err) {
+    console.error('Ошибка загрузки поставок:', err)
+  }
+  topItems.value = await GetTopItems() || []
+  await loadWarehouses()
+  turnoverData.value = await GetTurnoverByWarehouse() || []
+}
 function logout() {
   localStorage.removeItem('loggedIn')
   loggedIn.value = false

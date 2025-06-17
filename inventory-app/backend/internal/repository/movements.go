@@ -1,12 +1,29 @@
 package repository
-import (
-	"inventory-app/backend/internal/db"
-	"inventory-app/backend/internal/model"
-	"log"
-)
 
-func GetAllMovementsThisMonth() ([]model.Movement, error) {
-	query := `
+import (
+	"context"
+	"inventory-app/backend/internal/model"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
+)
+type MovementRepository interface {
+	GetAllMovementsThisMonth(ctx context.Context) ([]model.Movement, error)
+}
+
+type PgMovementRepository struct {
+	db  *sqlx.DB
+	log zerolog.Logger
+}
+
+func NewMovementRepository(db *sqlx.DB, log zerolog.Logger) *PgMovementRepository {
+	return &PgMovementRepository{
+		db:  db,
+		log: log,
+	}
+}
+func (r *PgMovementRepository) GetAllMovementsThisMonth(ctx context.Context) ([]model.Movement, error) {
+		query := `
 		 SELECT
   i.inbound_id      AS movement_id,
   'inbound'         AS type,
@@ -49,10 +66,11 @@ WHERE o.shipped_at >= date_trunc('month', CURRENT_DATE)
 ORDER BY date DESC;
 	`
 	var movements []model.Movement
-	err := db.DB.Select(&movements, query)
+	err := r.db.SelectContext(ctx, &movements, query)
 	if err != nil {
-			log.Println("❌ Ошибка при получении движений:", err)
-			return nil, err
+		r.log.Error().Err(err).Msg("Ошибка при получении движений за месяц")
+		return nil, err
 	}
+	r.log.Info().Int("count", len(movements)).Msg("Движения за месяц успешно получены")
 	return movements, nil
 }

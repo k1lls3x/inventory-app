@@ -6,6 +6,10 @@ export function AddInbound(arg1) {
   return window['go']['app']['App']['AddInbound'](arg1);
 }
 
+export function AddInboundTx(arg1, arg2) {
+  return window['go']['app']['App']['AddInboundTx'](arg1, arg2);
+}
+
 export function AddItem(arg1) {
   return window['go']['app']['App']['AddItem'](arg1);
 }
