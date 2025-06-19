@@ -26,7 +26,10 @@
 Place additional screenshots in the `screenshots/` folder and they will appear here:
 ![gallery1](screenshots/1.png)
 ![gallery2](screenshots/2.png)
-
+![gallery3](screenshots/3.png)
+![gallery4](screenshots/4.png)
+![gallery5](screenshots/5.png)
+![gallery6](screenshots/6.png)
 <!-- INSTALLATION -->
 ## :blue_book: Installation
 1. Install Go and Node.js.
