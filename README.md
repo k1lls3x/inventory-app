@@ -11,12 +11,13 @@
 
 ## :blue_book: About
 
-<img src="screenshots/main.png" alt="main" align="right" width="500px">
+<p align="center">
+  <img src="screenshots/main.png" alt="Main screenshot" width="600px">
+</p>
 
 Inventory App is a desktop inventory management system powered by [**Wails**](https://wails.io/) and Vue. It lets you manage items, warehouses, suppliers and deliveries. Stock levels and movements are visualised with charts. The app supports role based authentication, Excel export and stores data in PostgreSQL.
 
 ## 🖼️ Gallery
-Place additional screenshots in the `screenshots/` folder and they will appear here:
 ![gallery2](screenshots/2.png)
 
 ![gallery3](screenshots/3.png)
