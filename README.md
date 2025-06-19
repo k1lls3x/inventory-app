@@ -24,7 +24,6 @@
 <!-- IMAGES -->
 ## 🖼️ Gallery
 Place additional screenshots in the `screenshots/` folder and they will appear here:
-![gallery1](screenshots/1.png)
 ![gallery2](screenshots/2.png)
 ![gallery3](screenshots/3.png)
 ![gallery4](screenshots/4.png)
