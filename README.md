@@ -1,7 +1,7 @@
 <h1 align="center"> :clipboard: Inventory App :clipboard: </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Languages-2-blueviolet?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Languages-5-blueviolet?style=for-the-badge">
   <img src="https://img.shields.io/github/repo-size/Zproger/bspwm-dotfiles?style=for-the-badge">
 </p>
 
