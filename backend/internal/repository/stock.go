@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"inventory-app/backend/internal/model"
 	"fmt"
+	"inventory-app/backend/internal/model"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
@@ -58,17 +58,22 @@ func (r *PgStockRepository) GetWeeklyStockTrend(ctx context.Context) ([]model.Da
         (CURRENT_DATE - INTERVAL '6 days')::date AS start_date,
         CURRENT_DATE::date AS end_date
 ),
-init_stock AS (
+future_in AS (
     SELECT
         COALESCE(SUM(quantity), 0) AS qty
     FROM inbound
-    WHERE received_at < (SELECT start_date FROM period)
+    WHERE received_at >= (SELECT start_date FROM period)
 ),
-init_out AS (
+future_out AS (
     SELECT
         COALESCE(SUM(quantity), 0) AS qty
     FROM outbound
-    WHERE shipped_at < (SELECT start_date FROM period)
+    WHERE shipped_at >= (SELECT start_date FROM period)
+),
+start_stock AS (
+    SELECT
+        COALESCE(SUM(quantity), 0) - (SELECT qty FROM future_in) + (SELECT qty FROM future_out) AS qty
+    FROM stock
 ),
 days AS (
     SELECT generate_series(
@@ -106,7 +111,7 @@ running_total AS (
 )
 SELECT
     a.d AS date,
-    (SELECT qty FROM init_stock) - (SELECT qty FROM init_out) + r.net_change AS total
+    (SELECT qty FROM start_stock) + r.net_change AS total
 FROM days a
 JOIN running_total r ON a.d = r.d
 ORDER BY a.d;
