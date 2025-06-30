@@ -12,25 +12,25 @@ import (
 	"os"
 
 	"errors"
-	"time"
 	"fmt"
-		"github.com/rs/zerolog"
+	"github.com/rs/zerolog"
+	"time"
 )
 
 // App struct
 type App struct {
-	ctx             context.Context
-	logger zerolog.Logger
-	itemService     *service.ItemService
-	userService     *service.UserService
-	authService     *service.AuthService
-	inboundService  *service.InboundService
-	supplierService *service.SupplierService
+	ctx              context.Context
+	logger           zerolog.Logger
+	itemService      *service.ItemService
+	userService      *service.UserService
+	authService      *service.AuthService
+	inboundService   *service.InboundService
+	supplierService  *service.SupplierService
 	warehouseService *service.WarehouseService
-	stockService    *service.StockService
-	outboundService *service.OutboundService
+	stockService     *service.StockService
+	outboundService  *service.OutboundService
 	dashboardService *service.DashboardService
-	movementService *service.MovementService
+	movementService  *service.MovementService
 }
 
 func NewApp() *App {
@@ -40,11 +40,11 @@ func NewApp() *App {
 	logFile, err := os.OpenFile("logs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	var logger zerolog.Logger
 	if err != nil {
-			logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
-			logger.Error().Err(err).Msg("Ошибка открытия файла логов, пишем в stdout")
+		logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
+		logger.Error().Err(err).Msg("Ошибка открытия файла логов, пишем в stdout")
 	} else {
-			logger = zerolog.New(logFile).With().Timestamp().Logger()
-			logger.Info().Msg("=== Приложение запущено ===")
+		logger = zerolog.New(logFile).With().Timestamp().Logger()
+		logger.Info().Msg("=== Приложение запущено ===")
 	}
 
 	itemRepo := repository.NewPgItemRepository(dbInstance, logger)
@@ -53,11 +53,11 @@ func NewApp() *App {
 	userRepo := repository.NewUserRepository(dbInstance, logger)
 	userService := service.NewUserService(userRepo, logger)
 
-	authRepo := repository.NewAuthRepository(dbInstance,logger)
+	authRepo := repository.NewAuthRepository(dbInstance, logger)
 	authService := service.NewAuthService(authRepo, logger)
 
-	inboundRepo := repository.NewInboundRepository(dbInstance,logger)
-	inboundService := service.NewInboundService(inboundRepo,itemRepo,dbInstance,logger)
+	inboundRepo := repository.NewInboundRepository(dbInstance, logger)
+	inboundService := service.NewInboundService(inboundRepo, itemRepo, dbInstance, logger)
 
 	supplierRepo := repository.NewSupplierRepository(dbInstance, logger)
 	supplierService := service.NewSupplierService(supplierRepo, dbInstance, logger)
@@ -88,19 +88,20 @@ func NewApp() *App {
 		outboundService:  outboundService,
 		dashboardService: dashboardService,
 		movementService:  movementService,
-		logger:  logger,
+		logger:           logger,
 	}
 
 }
 
 // Startup is called when the app starts
 func (a *App) Startup(ctx context.Context) {
-    a.ctx = ctx
+	a.ctx = ctx
 }
 
 func (a *App) GetDashboard() (*model.DashboardData, error) {
 	return a.dashboardService.LoadDashboard(a.ctx)
 }
+
 //-----------------------STOCKS---------------------------------\\
 
 func (a *App) GetStockDetails() ([]model.ItemWithStock, error) {
@@ -129,6 +130,21 @@ func (a *App) ExportStockToExcel() (string, error) {
 	return Export.ExportStockToExcel(a.stockService, a.logger)
 }
 
+func (a *App) ExportUsersToExcel() (string, error) {
+	return Export.ExportUsersToExcel(a.userService, a.logger)
+}
+
+func (a *App) ExportSuppliersToExcel() (string, error) {
+	return Export.ExportSuppliersToExcel(a.supplierService, a.logger)
+}
+
+func (a *App) ExportDeliveriesToExcel() (string, error) {
+	return Export.ExportDeliveriesToExcel(a.inboundService, a.logger)
+}
+
+func (a *App) ExportItemsToExcel() (string, error) {
+	return Export.ExportItemsToExcel(a.itemService, a.logger)
+}
 
 //-----------------------Items---------------------------------\\
 
@@ -144,23 +160,23 @@ func (a *App) GetTopItems() ([]model.ItemWithStock, error) {
 	return a.dashboardService.LoadTopItems(a.ctx)
 }
 
-func (a *App)  UpdateItem(item model.Item) error {
-	return a.itemService.UpdateItem(a.ctx,item)
+func (a *App) UpdateItem(item model.Item) error {
+	return a.itemService.UpdateItem(a.ctx, item)
 }
 
 func (a *App) RemoveItem(sku string) error {
-	return a.itemService.RemoveItem(a.ctx,sku)
+	return a.itemService.RemoveItem(a.ctx, sku)
 }
 
 func (a *App) AddItem(item model.Item) error {
-	return a.itemService.AddItem(a.ctx,item)
+	return a.itemService.AddItem(a.ctx, item)
 }
 
 func (a *App) FindItems(filter model.ItemFilter) ([]model.Item, error) {
-	return a.itemService.FindItems(a.ctx,filter)
+	return a.itemService.FindItems(a.ctx, filter)
 }
 
-//-----------------------Warehouse---------------------------------\\
+// -----------------------Warehouse---------------------------------\\
 func (a *App) GetWarehouses() ([]model.Warehouse, error) {
 	return a.warehouseService.GetWarehouses(a.ctx)
 }
@@ -174,30 +190,32 @@ func (a *App) EditWarehouse(warehouse model.Warehouse) error {
 func (a *App) GetTurnoverByWarehouse() ([]model.ItemTurnoverByWarehouse, error) {
 	return a.dashboardService.LoadTurnoverByWarehouse(a.ctx)
 }
+
 //-----------------------Indbound---------------------------------\\
 
-func (a *App) GetInboundDetails()([]model.InboundDetails,error){
+func (a *App) GetInboundDetails() ([]model.InboundDetails, error) {
 	return a.inboundService.ListInboundDetails(a.ctx)
 }
 
-func (a *App) GetInboundDetailsByDate(date string)([]model.InboundDetails,error){
-	return a.inboundService.ListInboundDetailsByDate(a.ctx,date)
+func (a *App) GetInboundDetailsByDate(date string) ([]model.InboundDetails, error) {
+	return a.inboundService.ListInboundDetailsByDate(a.ctx, date)
 }
 
-func (a *App) AddInbound(inb model.Inbound) error{
-	return  a.inboundService.AddInbound(a.ctx,inb);
+func (a *App) AddInbound(inb model.Inbound) error {
+	return a.inboundService.AddInbound(a.ctx, inb)
 }
-func (a *App) AddInboundTx(inb model.Inbound, item model.Item) error{
-	return  a.inboundService.AddInboundTx(a.ctx,inb,item);
+func (a *App) AddInboundTx(inb model.Inbound, item model.Item) error {
+	return a.inboundService.AddInboundTx(a.ctx, inb, item)
 }
-func (a *App) DeleteInbound(inboundId int) error{
-	return  a.inboundService.DeleteInbound(a.ctx,inboundId)
+func (a *App) DeleteInbound(inboundId int) error {
+	return a.inboundService.DeleteInbound(a.ctx, inboundId)
 }
 
-func (a *App)  EditInbound(inb model.Inbound) error{
-	return  a.inboundService.EditInbound(a.ctx,inb)
+func (a *App) EditInbound(inb model.Inbound) error {
+	return a.inboundService.EditInbound(a.ctx, inb)
 }
-//-----------------------Supplier---------------------------------\\
+
+// -----------------------Supplier---------------------------------\\
 func (a *App) GetSuppliers() ([]model.Supplier, error) {
 	return a.supplierService.GetSuppliers(a.ctx)
 }
@@ -210,27 +228,28 @@ func (a *App) AddSupplier(sp model.Supplier) error {
 func (a *App) RemoveSupplier(supplierId int) error {
 	return a.supplierService.RemoveSupplier(a.ctx, supplierId)
 }
+
 //-----------------------Auth---------------------------------\\
 
 func (a *App) RegisterUser(username, password, fullName, role string) error {
 	user := &model.User{
-			Username: username,
-			Role:     role,
-			FullName: fullName,
+		Username: username,
+		Role:     role,
+		FullName: fullName,
 	}
-	return a.authService.Register(a.ctx,user, password)
+	return a.authService.Register(a.ctx, user, password)
 }
 
 func (a *App) LoginUser(username, password string) (*model.User, error) {
-	user, ok := a.authService.Authorize(a.ctx,username, password)
+	user, ok := a.authService.Authorize(a.ctx, username, password)
 	if !ok {
-			return nil, errors.New("Неверный логин или пароль")
+		return nil, errors.New("Неверный логин или пароль")
 	}
 	return user, nil
 }
 
-func (a *App) ChangePassword(login, oldPassword, newPassword string) error{
-	return a.authService.ChangePassword(a.ctx,login,oldPassword,newPassword)
+func (a *App) ChangePassword(login, oldPassword, newPassword string) error {
+	return a.authService.ChangePassword(a.ctx, login, oldPassword, newPassword)
 }
 
 //-----------------------Users---------------------------------\\
@@ -247,9 +266,8 @@ func (a *App) ChangeUserData(u model.UserUpdate) error {
 	return a.userService.ChangeUserData(a.ctx, u)
 }
 
-
-//-----------------------Movements---------------------------------\\
-func (a *App) GetAllMovementsThisMonth() ([]model.Movement, error){
+// -----------------------Movements---------------------------------\\
+func (a *App) GetAllMovementsThisMonth() ([]model.Movement, error) {
 	return a.movementService.GetAllMovementsThisMonth(a.ctx)
 }
 

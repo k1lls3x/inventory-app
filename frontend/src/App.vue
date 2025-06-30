@@ -1135,6 +1135,7 @@ import { ChangeStock } from '../wailsjs/go/app/App'
 import { GetStockDetails } from '../wailsjs/go/app/App'
 import { RemoveStock } from '../wailsjs/go/app/App'
 import { ExportStockToExcel } from '../wailsjs/go/app/App'
+import { ExportUsersToExcel, ExportSuppliersToExcel, ExportDeliveriesToExcel, ExportItemsToExcel } from '../wailsjs/go/app/App'
 import LoginForm from './components/LoginForm.vue'
 import {
   GetOutboundDetails, AddOutbound, EditOutbound, RemoveOutbound
@@ -1381,7 +1382,22 @@ async function deleteUser(u) {
 }
 
 function exportUsersToExcel() {
-  alert('Заглушка экспорта пользователей')
+  ExportUsersToExcel().then(base64data => {
+    const binary = atob(base64data)
+    const len = binary.length
+    const bytes = new Uint8Array(len)
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'users.xlsx'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  }).catch(err => {
+    alert('Ошибка экспорта: ' + err)
+  })
 }
 
 function handleLogin() {
@@ -1583,7 +1599,22 @@ function maskPhone(event, obj) {
 
 
 function exportSuppliersToExcel() {
-  alert('Заглушка экспорта поставщиков')
+  ExportSuppliersToExcel().then(base64data => {
+    const binary = atob(base64data)
+    const len = binary.length
+    const bytes = new Uint8Array(len)
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'suppliers.xlsx'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  }).catch(err => {
+    alert('Ошибка экспорта: ' + err)
+  })
 }
 
 function exportToExcel() {
@@ -1972,7 +2003,22 @@ function deleteDelivery(delivery) {
 }
 
 function exportDeliveriesToExcel() {
-  alert('Заглушка экспорта. Тут будет экспорт в Excel')
+  ExportDeliveriesToExcel().then(base64data => {
+    const binary = atob(base64data)
+    const len = binary.length
+    const bytes = new Uint8Array(len)
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'deliveries.xlsx'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  }).catch(err => {
+    alert('Ошибка экспорта: ' + err)
+  })
 }
 
 // Форматирование даты, чтобы не падало
@@ -2137,7 +2183,22 @@ const totalStockPerItem = computed(() => {
 })
 
 function exportItemsToExcel() {
-  alert('Заглушка экспорта товаров в Excel');
+  ExportItemsToExcel().then(base64data => {
+    const binary = atob(base64data)
+    const len = binary.length
+    const bytes = new Uint8Array(len)
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'items.xlsx'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  }).catch(err => {
+    alert('Ошибка экспорта: ' + err)
+  })
 }
 function closeAddModal() {
   showAddModal.value = false
