@@ -62,24 +62,24 @@ export function EditWarehouse(arg1) {
   return window['go']['app']['App']['EditWarehouse'](arg1);
 }
 
-export function ExportStockToExcel() {
-  return window['go']['app']['App']['ExportStockToExcel']();
-}
-
-export function ExportUsersToExcel() {
-  return window['go']['app']['App']['ExportUsersToExcel']();
-}
-
-export function ExportSuppliersToExcel() {
-  return window['go']['app']['App']['ExportSuppliersToExcel']();
-}
-
 export function ExportDeliveriesToExcel() {
   return window['go']['app']['App']['ExportDeliveriesToExcel']();
 }
 
 export function ExportItemsToExcel() {
   return window['go']['app']['App']['ExportItemsToExcel']();
+}
+
+export function ExportStockToExcel() {
+  return window['go']['app']['App']['ExportStockToExcel']();
+}
+
+export function ExportSuppliersToExcel() {
+  return window['go']['app']['App']['ExportSuppliersToExcel']();
+}
+
+export function ExportUsersToExcel() {
+  return window['go']['app']['App']['ExportUsersToExcel']();
 }
 
 export function FindItems(arg1) {

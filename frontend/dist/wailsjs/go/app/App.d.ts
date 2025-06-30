@@ -32,15 +32,15 @@ export function EditSupplier(arg1:model.Supplier):Promise<void>;
 
 export function EditWarehouse(arg1:model.Warehouse):Promise<void>;
 
-export function ExportStockToExcel():Promise<string>;
-
-export function ExportUsersToExcel():Promise<string>;
-
-export function ExportSuppliersToExcel():Promise<string>;
-
 export function ExportDeliveriesToExcel():Promise<string>;
 
 export function ExportItemsToExcel():Promise<string>;
+
+export function ExportStockToExcel():Promise<string>;
+
+export function ExportSuppliersToExcel():Promise<string>;
+
+export function ExportUsersToExcel():Promise<string>;
 
 export function FindItems(arg1:model.ItemFilter):Promise<Array<model.Item>>;
 
