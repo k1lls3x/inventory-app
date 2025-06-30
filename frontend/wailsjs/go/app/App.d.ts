@@ -34,6 +34,14 @@ export function EditWarehouse(arg1:model.Warehouse):Promise<void>;
 
 export function ExportStockToExcel():Promise<string>;
 
+export function ExportUsersToExcel():Promise<string>;
+
+export function ExportSuppliersToExcel():Promise<string>;
+
+export function ExportDeliveriesToExcel():Promise<string>;
+
+export function ExportItemsToExcel():Promise<string>;
+
 export function FindItems(arg1:model.ItemFilter):Promise<Array<model.Item>>;
 
 export function FindStockByWarehouse(arg1:number):Promise<Array<model.ItemWithStock>>;
