@@ -2,24 +2,23 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/rs/zerolog"
 	"inventory-app/backend/internal/db"
-
 	"inventory-app/backend/internal/handler/export"
-
 	"inventory-app/backend/internal/model"
 	"inventory-app/backend/internal/repository"
 	"inventory-app/backend/internal/service"
 	"os"
-
-	"errors"
-	"fmt"
-	"github.com/rs/zerolog"
+	"sync"
 	"time"
 )
 
 // App struct
 type App struct {
 	ctx              context.Context
+	initOnce         sync.Once
 	logger           zerolog.Logger
 	itemService      *service.ItemService
 	userService      *service.UserService
@@ -34,68 +33,64 @@ type App struct {
 }
 
 func NewApp() *App {
-
-	dbInstance := db.Init()
-
-	logFile, err := os.OpenFile("logs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	var logger zerolog.Logger
-	if err != nil {
-		logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
-		logger.Error().Err(err).Msg("Ошибка открытия файла логов, пишем в stdout")
-	} else {
-		logger = zerolog.New(logFile).With().Timestamp().Logger()
-		logger.Info().Msg("=== Приложение запущено ===")
-	}
-
-	itemRepo := repository.NewPgItemRepository(dbInstance, logger)
-	itemService := service.NewItemService(itemRepo, logger)
-
-	userRepo := repository.NewUserRepository(dbInstance, logger)
-	userService := service.NewUserService(userRepo, logger)
-
-	authRepo := repository.NewAuthRepository(dbInstance, logger)
-	authService := service.NewAuthService(authRepo, logger)
-
-	inboundRepo := repository.NewInboundRepository(dbInstance, logger)
-	inboundService := service.NewInboundService(inboundRepo, itemRepo, dbInstance, logger)
-
-	supplierRepo := repository.NewSupplierRepository(dbInstance, logger)
-	supplierService := service.NewSupplierService(supplierRepo, dbInstance, logger)
-
-	warehouseRepo := repository.NewWarehouseRepository(dbInstance, logger)
-	warehouseService := service.NewWarehouseService(warehouseRepo, dbInstance, logger)
-
-	stockRepo := repository.NewStockRepository(dbInstance, logger)
-	stockService := service.NewStockService(stockRepo, dbInstance, logger)
-
-	outboundRepo := repository.NewOutboundRepository(dbInstance, logger)
-	outboundService := service.NewOutboundService(outboundRepo, dbInstance, logger)
-
-	dashboardRepo := repository.NewDashboardRepository(dbInstance, logger)
-	dashboardService := service.NewDashboardService(dashboardRepo, dbInstance, logger)
-
-	movementRepo := repository.NewMovementRepository(dbInstance, logger)
-	movementService := service.NewMovementService(movementRepo, dbInstance, logger)
-
 	return &App{
-		itemService:      itemService,
-		userService:      userService,
-		authService:      authService,
-		inboundService:   inboundService,
-		supplierService:  supplierService,
-		warehouseService: warehouseService,
-		stockService:     stockService,
-		outboundService:  outboundService,
-		dashboardService: dashboardService,
-		movementService:  movementService,
-		logger:           logger,
+		logger: newLogger(),
+	}
+}
+
+func newLogger() zerolog.Logger {
+	logFile, err := os.OpenFile("logs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+		logger.Error().Err(err).Msg("Ошибка открытия файла логов, пишем в stdout")
+		return logger
 	}
 
+	logger := zerolog.New(logFile).With().Timestamp().Logger()
+	logger.Info().Msg("=== Приложение запущено ===")
+	return logger
+}
+
+func (a *App) initServices() {
+	a.initOnce.Do(func() {
+		dbInstance := db.Init()
+
+		itemRepo := repository.NewPgItemRepository(dbInstance, a.logger)
+		a.itemService = service.NewItemService(itemRepo, a.logger)
+
+		userRepo := repository.NewUserRepository(dbInstance, a.logger)
+		a.userService = service.NewUserService(userRepo, a.logger)
+
+		authRepo := repository.NewAuthRepository(dbInstance, a.logger)
+		a.authService = service.NewAuthService(authRepo, a.logger)
+
+		inboundRepo := repository.NewInboundRepository(dbInstance, a.logger)
+		a.inboundService = service.NewInboundService(inboundRepo, itemRepo, dbInstance, a.logger)
+
+		supplierRepo := repository.NewSupplierRepository(dbInstance, a.logger)
+		a.supplierService = service.NewSupplierService(supplierRepo, dbInstance, a.logger)
+
+		warehouseRepo := repository.NewWarehouseRepository(dbInstance, a.logger)
+		a.warehouseService = service.NewWarehouseService(warehouseRepo, dbInstance, a.logger)
+
+		stockRepo := repository.NewStockRepository(dbInstance, a.logger)
+		a.stockService = service.NewStockService(stockRepo, dbInstance, a.logger)
+
+		outboundRepo := repository.NewOutboundRepository(dbInstance, a.logger)
+		a.outboundService = service.NewOutboundService(outboundRepo, dbInstance, a.logger)
+
+		dashboardRepo := repository.NewDashboardRepository(dbInstance, a.logger)
+		a.dashboardService = service.NewDashboardService(dashboardRepo, dbInstance, a.logger)
+
+		movementRepo := repository.NewMovementRepository(dbInstance, a.logger)
+		a.movementService = service.NewMovementService(movementRepo, dbInstance, a.logger)
+	})
 }
 
 // Startup is called when the app starts
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+	a.initServices()
 }
 
 func (a *App) GetDashboard() (*model.DashboardData, error) {

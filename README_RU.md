@@ -26,7 +26,7 @@
 
 ## :blue_book: Установка
 1. **Установите зависимости**
-   - [Go 1.21+](https://go.dev/dl/)
+   - [Go 1.24+](https://go.dev/dl/)
    - [Node.js 16+](https://nodejs.org/)
 2. **Установите Wails CLI**
    ```bash
@@ -34,7 +34,6 @@
    ```
 3. **Настройте PostgreSQL**
    - Создайте базу данных и пользователя.
-   - Импортируйте схему из `migrations/001_init_schema.sql`.
    - Создайте файл `.env` со значениями:
      ```
      DB_HOST=localhost
@@ -42,7 +41,13 @@
      DB_USER=your_user
      DB_PASSWORD=your_password
      DB_NAME=inventory
+     
+     BOOTSTRAP_ADMIN_USERNAME=admin
+     BOOTSTRAP_ADMIN_PASSWORD=admin123
+     BOOTSTRAP_ADMIN_FULL_NAME=Администратор
      ```
+   - Приложение само применяет `migrations/001_init_schema.sql` при старте.
+   - Если база пустая, при первом запуске создаётся стартовый администратор из значений выше.
 4. **Установите frontend-зависимости**
    ```bash
    cd frontend && npm install

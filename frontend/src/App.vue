@@ -96,6 +96,94 @@
               Нет данных для отображения
             </div>
           </div>
+          <div class="dashboard-risk-grid">
+            <div class="table-section dashboard-risk-card">
+              <div class="table-header dashboard-risk-header">
+                <div>
+                  <p class="title">Контроль дефицита</p>
+                  <p class="dashboard-subtitle">Товары ниже минимального остатка и бюджет на пополнение</p>
+                </div>
+                <select v-model.number="selectedRiskWarehouseId" class="input dashboard-risk-filter">
+                  <option :value="0">Все склады</option>
+                  <option v-for="wh in warehouses" :key="wh.warehouse_id" :value="wh.warehouse_id">
+                    {{ wh.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="risk-summary-cards">
+                <div class="risk-summary-card warning">
+                  <span class="risk-summary-label">Рисковых SKU</span>
+                  <strong>{{ lowStockItems.length }}</strong>
+                </div>
+                <div class="risk-summary-card danger">
+                  <span class="risk-summary-label">Критичных позиций</span>
+                  <strong>{{ criticalLowStockCount }}</strong>
+                </div>
+                <div class="risk-summary-card neutral">
+                  <span class="risk-summary-label">К дозакупке</span>
+                  <strong>{{ recommendedRestockUnits }}</strong>
+                </div>
+                <div class="risk-summary-card accent">
+                  <span class="risk-summary-label">Оценка бюджета</span>
+                  <strong>{{ formatMoney(recommendedRestockCost) }}</strong>
+                </div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Товар</th>
+                    <th>Склад</th>
+                    <th>Остаток</th>
+                    <th>Мин. остаток</th>
+                    <th>Рекомендация</th>
+                    <th>Статус</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in lowStockItems.slice(0, 8)" :key="`${item.item_id}-${item.warehouse_id}`">
+                    <td>
+                      <div>{{ item.name }}</div>
+                      <div class="dashboard-row-meta">{{ item.sku }}</div>
+                    </td>
+                    <td>{{ item.warehouse }}</td>
+                    <td>{{ item.current_stock }}</td>
+                    <td>{{ item.reorder_level }}</td>
+                    <td>{{ item.recommended_order }}</td>
+                    <td>
+                      <span class="stock-health-badge" :class="item.severity">
+                        {{ item.status_label }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div v-if="lowStockItems.length === 0" class="empty-message">
+                Все позиции находятся выше минимального остатка
+              </div>
+            </div>
+
+            <div class="chart-card dashboard-risk-sidecard">
+              <p class="title">Склады под нагрузкой</p>
+              <div class="warehouse-risk-list">
+                <div v-for="item in warehouseRiskSummary" :key="item.warehouse_id" class="warehouse-risk-row">
+                  <div>
+                    <div class="warehouse-risk-name">{{ item.name }}</div>
+                    <div class="dashboard-row-meta">{{ item.low_count }} SKU требуют внимания</div>
+                  </div>
+                  <div class="warehouse-risk-values">
+                    <strong>{{ item.critical_count }}</strong>
+                    <span>критично</span>
+                  </div>
+                </div>
+              </div>
+              <div v-if="warehouseRiskSummary.length === 0" class="empty-message">
+                По текущим данным дефицита нет
+              </div>
+            </div>
+          </div>
         </section>
  <!-- Пользователи (видно только админу) -->
  <section v-if="currentTab === 'Пользователи' && user?.role === 'admin'">
@@ -1191,17 +1279,9 @@ async function loadInitialData() {
   monthlyOrders.value = dash.monthly_orders
   newItems.value = dash.new_items
   suppliers.value = await GetSuppliers() || []
-  const stockData = await GetStockDetails()
-  stockList.value = stockData.map(s => ({
-    id: s.stock_id,
-    stock_id: s.stock_id,
-    item_id: s.item_id,
-    warehouse_id: s.warehouse_id,
-    name: s.name,
-    sku: s.sku,
-    warehouse: s.warehouse,
-    quantity: s.quantity
-  }))
+  const stockData = normalizeStockRows(await GetStockDetails())
+  stockList.value = stockData
+  allStockList.value = stockData
   await reloadMovements()
   await reloadOutbound()
   try {
@@ -1499,6 +1579,7 @@ const selectedWarehouseId = ref(0)
 const searchQuery = ref('')
 const currentTab = ref('Дашборд')
 const stockList = ref([])
+const allStockList = ref([])
 const totalStock = ref(0)
 const itemCount = ref(0)
 const monthlyOrders = ref(0)
@@ -1523,6 +1604,7 @@ const newInboundItem = ref({
   cost: 0,
 })
 const suppliers = ref([])
+const selectedRiskWarehouseId = ref(0)
  // если вкладки реализованы через состояние, замени на свой способ
 const warehouseSearch = ref('')
 const newWarehouse = ref({ name: '', location: '' })
@@ -1643,6 +1725,27 @@ function openAddDeliveryModal() {
   Object.assign(newInboundItem.value, { sku: '', name: '', description: '', uom: '', price: 0, cost: 0 })
 }
 
+function normalizeStockRows(rows) {
+  return (rows || []).map(s => ({
+    id: s.stock_id,
+    stock_id: s.stock_id,
+    item_id: s.item_id,
+    warehouse_id: s.warehouse_id,
+    name: s.name,
+    sku: s.sku,
+    warehouse: s.warehouse,
+    quantity: s.quantity
+  }))
+}
+
+async function refreshAllStockDetails() {
+  const rows = normalizeStockRows(await GetStockDetails())
+  allStockList.value = rows
+  if (Number(selectedWarehouseId.value) === 0) {
+    stockList.value = rows
+  }
+}
+
 const averagePrice = computed(() => {
   if (!items.value.length) return '—'
   // Игнорируем товары без цены (null или 0 можно убрать по желанию)
@@ -1699,11 +1802,12 @@ const payload = {
   received_at: receivedAt,
   received_by: deliveryToEdit.value.received_by || 1
 }
-  window.go.app.App.EditInbound(payload).then(() => {
+    window.go.app.App.EditInbound(payload).then(() => {
     closeEditDeliveryModal()
     GetInboundDetails().then(data => {
       deliveriesList.value = data || []
     })
+    refreshAllStockDetails()
   }).catch(err => {
     alert("Ошибка при обновлении поставки")
     console.error(err)
@@ -1797,6 +1901,7 @@ function confirmAddDelivery() {
       closeAddDeliveryModal()
       GetInboundDetails().then(data => { deliveriesList.value = data || [] })
       GetItems().then(data => { items.value = data || [] })
+      refreshAllStockDetails()
     }).catch(err => {
       alert('Ошибка при добавлении поставки')
       console.error(err)
@@ -1817,6 +1922,7 @@ function confirmAddDelivery() {
       GetInboundDetails().then(data => {
         deliveriesList.value = data || []
       })
+      refreshAllStockDetails()
     }).catch(err => {
       alert("Ошибка при добавлении поставки")
       console.error(err)
@@ -1853,6 +1959,7 @@ async function confirmAddOutbound() {
     closeAddOutboundModal()
     await  reloadOutbound()
     await reloadMovements()
+    await refreshAllStockDetails()
   } catch (e) {
     alert('Ошибка при добавлении: ' + (e?.message || ''))
   }
@@ -1884,6 +1991,7 @@ async function confirmEditOutbound() {
     closeEditOutboundModal();
     await reloadOutbound();
     await reloadMovements();
+    await refreshAllStockDetails();
   } catch (e) {
     alert('Ошибка при сохранении: ' + e?.message);
   }
@@ -1895,6 +2003,7 @@ async function deleteOutbound(o) {
   try {
     await RemoveOutbound(o.outbound_id)
     reloadOutbound()
+    refreshAllStockDetails()
   } catch (e) {
     alert('Ошибка при удалении: ' + (e?.message || ''))
   }
@@ -1924,21 +2033,13 @@ function deleteStock(stock) {
 
   RemoveStock(stock.stock_id)
     .then(() => {
+      refreshAllStockDetails()
       const reload = selectedWarehouseId.value === 0
         ? GetStockDetails
         : () => FindStockByWarehouse(selectedWarehouseId.value)
 
       reload().then(data => {
-        stockList.value = data.map(s => ({
-          id: s.stock_id,
-          stock_id: s.stock_id,
-          item_id: s.item_id,
-          warehouse_id: s.warehouse_id,
-          name: s.name,
-          sku: s.sku,
-          warehouse: s.warehouse,
-          quantity: s.quantity
-        }))
+        stockList.value = normalizeStockRows(data)
       })
     })
     .catch(err => {
@@ -1994,6 +2095,7 @@ function deleteDelivery(delivery) {
         GetInboundDetails().then(data => {
           deliveriesList.value = data || [];
         });
+        refreshAllStockDetails()
       })
       .catch(err => {
         alert("Ошибка при удалении поставки");
@@ -2099,18 +2201,10 @@ function confirmEditStock() {
     .then(() => {
       closeEditModal()
       reloadWeeklyTrend()
+      refreshAllStockDetails()
       if (selectedWarehouseId.value === 0) {
         GetStockDetails().then(data => {
-  stockList.value = data.map(s => ({
-    id: s.stock_id,
-    stock_id: s.stock_id,
-    item_id: s.item_id,
-    warehouse_id: s.warehouse_id,
-    name: s.name,
-    sku: s.sku,
-    warehouse: s.warehouse,
-    quantity: s.quantity
-  }))
+  stockList.value = normalizeStockRows(data)
 })      } else {
         FindStockByWarehouse(selectedWarehouseId.value).then(data => {
           stockList.value = data.map(s => ({
@@ -2222,19 +2316,11 @@ function confirmAddStock() {
   ).then(() => {
     closeAddModal()
     reloadWeeklyTrend()
+    refreshAllStockDetails()
     if (selectedWarehouseId.value === 0) {
       GetStockDetails().then(data => {
-        stockList.value = data.map(s => ({
-          id: s.stock_id, // ✅ нужно для deleteStock(stock)
-          stock_id: s.stock_id, // опционально, если хочешь сохранять явно
-          item_id: s.item_id,
-          warehouse_id: s.warehouse_id,
-          name: s.name,
-          sku: s.sku,
-          warehouse: s.warehouse,
-          quantity: s.quantity
-        }))
-        })
+        stockList.value = normalizeStockRows(data)
+      })
     } else {
       FindStockByWarehouse(selectedWarehouseId.value).then(data => {
         stockList.value = data.map(s => ({
@@ -2360,6 +2446,104 @@ const filteredWarehouses = computed(() =>
   )
 )
 
+const dashboardStockRows = computed(() => {
+  const warehouseId = Number(selectedRiskWarehouseId.value)
+  return allStockList.value.filter(row => warehouseId === 0 || row.warehouse_id === warehouseId)
+})
+
+const lowStockItems = computed(() => {
+  const stockMap = new Map()
+  for (const row of dashboardStockRows.value) {
+    const current = stockMap.get(row.item_id)
+    if (!current) {
+      stockMap.set(row.item_id, {
+        warehouse_id: row.warehouse_id,
+        warehouse: row.warehouse,
+        quantity: Number(row.quantity) || 0
+      })
+      continue
+    }
+    current.quantity += Number(row.quantity) || 0
+  }
+
+  return items.value
+    .map(item => {
+      const stockInfo = stockMap.get(item.item_id)
+      const currentStock = stockInfo?.quantity ?? 0
+      const reorderLevel = Number(item.reorder_level) || 0
+      const reorderQty = Number(item.reorder_qty) || 0
+      const shortage = Math.max(reorderLevel - currentStock, 0)
+      const recommendedOrder = shortage > 0
+        ? Math.max(reorderQty, shortage)
+        : 0
+
+      if (reorderLevel <= 0 || currentStock > reorderLevel) {
+        return null
+      }
+
+      const severity = currentStock === 0 ? 'critical' : currentStock <= Math.ceil(reorderLevel * 0.4) ? 'warning' : 'attention'
+
+      return {
+        item_id: item.item_id,
+        warehouse_id: stockInfo?.warehouse_id || 0,
+        warehouse: stockInfo?.warehouse || (selectedRiskWarehouseId.value === 0 ? 'Не распределен' : 'Нет остатков'),
+        name: item.name,
+        sku: item.sku,
+        current_stock: currentStock,
+        reorder_level: reorderLevel,
+        recommended_order: recommendedOrder,
+        estimated_cost: recommendedOrder * (Number(item.cost) || 0),
+        severity,
+        status_label: severity === 'critical' ? 'Критично' : severity === 'warning' ? 'Низкий остаток' : 'Нужен контроль'
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (a.severity !== b.severity) {
+        return ['critical', 'warning', 'attention'].indexOf(a.severity) - ['critical', 'warning', 'attention'].indexOf(b.severity)
+      }
+      return a.current_stock - b.current_stock
+    })
+})
+
+const criticalLowStockCount = computed(() =>
+  lowStockItems.value.filter(item => item.severity === 'critical').length
+)
+
+const recommendedRestockUnits = computed(() =>
+  lowStockItems.value.reduce((acc, item) => acc + item.recommended_order, 0)
+)
+
+const recommendedRestockCost = computed(() =>
+  lowStockItems.value.reduce((acc, item) => acc + item.estimated_cost, 0)
+)
+
+const warehouseRiskSummary = computed(() =>
+  warehouses.value
+    .map(warehouse => {
+      const scoped = lowStockItems.value.filter(item => item.warehouse_id === warehouse.warehouse_id)
+      return {
+        warehouse_id: warehouse.warehouse_id,
+        name: warehouse.name,
+        low_count: scoped.length,
+        critical_count: scoped.filter(item => item.severity === 'critical').length
+      }
+    })
+    .filter(item => item.low_count > 0)
+    .sort((a, b) => {
+      if (b.critical_count !== a.critical_count) return b.critical_count - a.critical_count
+      return b.low_count - a.low_count
+    })
+)
+
+function formatMoney(value) {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    maximumFractionDigits: 0
+  }).format(Number(value) || 0)
+}
+
 
 onMounted(async () => {
   if (loggedIn.value && !user.value) {
@@ -2383,17 +2567,10 @@ onMounted(async () => {
     newItems.value = data.new_items
   })
   GetSuppliers().then(data => suppliers.value = data || [])
-    GetStockDetails().then(data => {
-    stockList.value = data.map(s => ({
-      id: s.stock_id, // 👈 обязательно
-      stock_id: s.stock_id,
-      item_id: s.item_id,
-      warehouse_id: s.warehouse_id,
-      name: s.name,
-      sku: s.sku,
-      warehouse: s.warehouse,
-      quantity: s.quantity
-    }))
+  GetStockDetails().then(data => {
+    const rows = normalizeStockRows(data)
+    stockList.value = rows
+    allStockList.value = rows
   })
 
   await reloadMovements()
@@ -2418,9 +2595,10 @@ watch(currentTab, async (tab) => {
     if (tab === 'Движения') {
     await reloadMovements()
     await reloadOutbound()
-  }
+    }
     topItems.value = await GetTopItems() || []
     turnoverData.value = await GetTurnoverByWarehouse() || []
+    await refreshAllStockDetails()
   }
   if (tab === 'Пользователи' && user.value?.role === 'admin') {
     try {
@@ -2436,16 +2614,9 @@ watch(selectedWarehouseId, (id) => {
   const warehouseId = Number(id)
   if (warehouseId === 0) {
     GetStockDetails().then(data => {
-      stockList.value = data.map(s => ({
-        id: s.stock_id,
-        stock_id: s.stock_id,
-        item_id: s.item_id,
-        warehouse_id: s.warehouse_id,
-        name: s.name,
-        sku: s.sku,
-        warehouse: s.warehouse,
-        quantity: s.quantity
-      }))
+      const rows = normalizeStockRows(data)
+      stockList.value = rows
+      allStockList.value = rows
     })
   } else {
     FindStockByWarehouse(warehouseId).then(data => {
@@ -2474,5 +2645,144 @@ const filteredStockList = computed(() =>
 </script>
 
 <style scoped>
+.dashboard-risk-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 1.2rem;
+  margin-top: 1.2rem;
+}
 
+.dashboard-risk-card,
+.dashboard-risk-sidecard {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 249, 252, 0.98));
+}
+
+.dashboard-risk-header {
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.dashboard-subtitle,
+.dashboard-row-meta {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.dashboard-risk-filter {
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.risk-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.risk-summary-card {
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.risk-summary-card strong {
+  font-size: 1.15rem;
+  color: #111827;
+}
+
+.risk-summary-card.warning { background: #fff7ed; }
+.risk-summary-card.danger { background: #fef2f2; }
+.risk-summary-card.neutral { background: #f8fafc; }
+.risk-summary-card.accent { background: #eff6ff; }
+
+.risk-summary-label {
+  color: #4b5563;
+  font-size: 0.84rem;
+}
+
+.stock-health-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.stock-health-badge.critical {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.stock-health-badge.warning {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.stock-health-badge.attention {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.warehouse-risk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.warehouse-risk-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.warehouse-risk-name {
+  font-weight: 700;
+  color: #111827;
+}
+
+.warehouse-risk-values {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.warehouse-risk-values strong {
+  color: #b91c1c;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-risk-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-summary-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-risk-filter {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .risk-summary-cards {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

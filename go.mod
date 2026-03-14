@@ -2,16 +2,16 @@ module inventory-app
 
 go 1.24.3
 
-require github.com/wailsapp/wails/v2 v2.10.1
+require github.com/wailsapp/wails/v2 v2.11.0
 
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.34.0
 	github.com/xuri/excelize/v2 v2.9.1
-
 )
 
 require (
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/tiendc/go-deepcopy v1.6.0 // indirect
@@ -42,7 +42,7 @@ require (
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/wailsapp/go-webview2 v1.0.19 // indirect
+	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.38.0
 	golang.org/x/net v0.40.0 // indirect

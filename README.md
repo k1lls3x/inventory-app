@@ -30,7 +30,7 @@ Inventory App is a desktop inventory management system powered by [**Wails**](ht
 
 ## :blue_book: Installation
 1. **Install prerequisites**
-   - [Go 1.21+](https://go.dev/dl/)
+   - [Go 1.24+](https://go.dev/dl/)
    - [Node.js 16+](https://nodejs.org/)
    Ensure the `go` and `npm` commands are available in your `PATH`.
 2. **Install the Wails CLI**
@@ -39,7 +39,6 @@ Inventory App is a desktop inventory management system powered by [**Wails**](ht
    ```
 3. **Configure PostgreSQL**
    - Create a database and user.
-   - Load `migrations/001_init_schema.sql` into your database.
    - Create a `.env` file with:
      ```
      DB_HOST=localhost
@@ -47,7 +46,13 @@ Inventory App is a desktop inventory management system powered by [**Wails**](ht
      DB_USER=your_user
      DB_PASSWORD=your_password
      DB_NAME=inventory
+     
+     BOOTSTRAP_ADMIN_USERNAME=admin
+     BOOTSTRAP_ADMIN_PASSWORD=admin123
+     BOOTSTRAP_ADMIN_FULL_NAME=Administrator
      ```
+   - The application applies `migrations/001_init_schema.sql` automatically on startup.
+   - If the database is empty, the first start creates the bootstrap admin user from the values above.
 4. **Install frontend dependencies**
    ```bash
    cd frontend && npm install
@@ -60,4 +65,3 @@ Inventory App is a desktop inventory management system powered by [**Wails**](ht
 Feel free to open issues or pull requests.
 
 ---
-
