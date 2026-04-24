@@ -24,9 +24,9 @@ func ensureBootstrapAdmin(db *sqlx.DB) error {
 		return nil
 	}
 
-	username := firstNonEmpty(os.Getenv("BOOTSTRAP_ADMIN_USERNAME"), defaultBootstrapAdminUsername)
-	password := firstNonEmpty(os.Getenv("BOOTSTRAP_ADMIN_PASSWORD"), defaultBootstrapAdminPassword)
-	fullName := firstNonEmpty(os.Getenv("BOOTSTRAP_ADMIN_FULL_NAME"), defaultBootstrapAdminFullName)
+	username := firstNonEmpty(BuildBootstrapAdminUsername, os.Getenv("BOOTSTRAP_ADMIN_USERNAME"), defaultBootstrapAdminUsername)
+	password := firstNonEmpty(BuildBootstrapAdminPassword, os.Getenv("BOOTSTRAP_ADMIN_PASSWORD"), defaultBootstrapAdminPassword)
+	fullName := firstNonEmpty(BuildBootstrapAdminFullName, os.Getenv("BOOTSTRAP_ADMIN_FULL_NAME"), defaultBootstrapAdminFullName)
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

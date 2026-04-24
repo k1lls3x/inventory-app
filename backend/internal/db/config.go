@@ -2,9 +2,10 @@ package db
 
 import (
 	"fmt"
-	"os"
 	"log"
+	"os"
 )
+
 // Переменные будут переопределяться через ldflags на этапе сборки
 
 var (
@@ -13,15 +14,18 @@ var (
 	BuildDBUser     string
 	BuildDBPassword string
 	BuildDBName     string
+
+	BuildBootstrapAdminUsername string
+	BuildBootstrapAdminPassword string
+	BuildBootstrapAdminFullName string
 )
 
-
-type Config struct{
-	Host string
-	Port string
-	User string
+type Config struct {
+	Host     string
+	Port     string
+	User     string
 	Password string
-	Name string
+	Name     string
 }
 
 func LoadConfig() *Config {
@@ -56,7 +60,7 @@ func LoadConfig() *Config {
 	}
 }
 
-func (cfg *Config) DSN() string{
+func (cfg *Config) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name,
